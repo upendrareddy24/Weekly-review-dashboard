@@ -1,0 +1,63 @@
+Sheet: Sheet1
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Accounts']
+--------------------------------------------------
+Sheet: Accounts
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', '25000 - 1M (5 stocks)', '25000 (5 stocks)', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10']
+--------------------------------------------------
+Sheet: WMR_Contributor
+Columns: ['Unnamed: 0', 'Hari', 'Upendra', 'Venu', 'Santosh', 'Hari.1', 'Guna', 'Bhujanga/Sid', 'Trishok', 'Hari.2']
+--------------------------------------------------
+Sheet: Week48
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']
+--------------------------------------------------
+Sheet: 3Swing-HK
+Columns: ['Date', 'Ticker', 'BO?', 'Rvol Trend', 'POC 3M & 1M', 'Squeeze', 'Total score for 5', 'Rating', 'Entry', 'Target', 'SL', 'RR', 'Unnamed: 12', 'Unnamed: 13', 'decision', 'Comments']
+--------------------------------------------------
+Sheet: 3SWING-PF
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Entry', 'Target', 'SL', 'RR']
+--------------------------------------------------
+Sheet: 4POS-BO-HK
+Columns: ['Date', 'Ticker', 'W', 'M', 'Setup Rating', 'Rvol Trend', 'Option Flow', 'SMA 200 cross', 'POC 3 years/1year', 'Squeeze', 'RS VS SPY/QQQ', 'Act', 'Volume profile', 'Act_Opt', 'Target', 'Commetns/ Key Takeaways', 'Unnamed: 16']
+--------------------------------------------------
+Sheet: 4Portfolio_10
+Columns: [datetime.datetime(2025, 11, 9, 0, 0), 'Ticker', 'Entry', 'quantity', 'Investmnet', 'Target', 'target%', 'Duration (Months)', 'SL', 'Last price', 'RR']
+--------------------------------------------------
+Sheet: 5POS-HV-HK
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Act', 'Volume profile', 'Act_Opt', 'Target', 'Commetns/ Key Takeaways']
+--------------------------------------------------
+Sheet: 5HV-PF
+Columns: []
+--------------------------------------------------
+Sheet: 6POS-PAT-HK
+Columns: ['Unnamed: 0', 'Holdings', 'BUY', 'Wait for Pullback', 'BUY Investment', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12', 'Unnamed: 13', 'Unnamed: 14', 'Unnamed: 15', 'Unnamed: 16']
+--------------------------------------------------
+Sheet: 6PAT-PF
+Columns: []
+--------------------------------------------------
+Sheet: 7INV-HK
+Columns: ['Unnamed: 0', 'Unnamed: 1']
+--------------------------------------------------
+Sheet: 7INV-PF
+Columns: []
+--------------------------------------------------
+Sheet: 1 week swings
+Columns: ['Date', 'Ticker', 'Strategy (no of bars)', 'Sector', '4H-Dec', 'D-Dec', 'POC/VAH', 'Candle', 'Immediate res', 'Score (5)', 'Entry', 'Exit', '% change', 'Result', 'Notes', 'Unnamed: 15', 'Unnamed: 16', 'Unnamed: 17', 'Unnamed: 18', 'Unnamed: 19', 'Unnamed: 20', '>0.2', 'Bullish']
+--------------------------------------------------
+Sheet: #Options Swing
+Columns: ['Ticker', 'Option chain', 'SQ W/D', 'Time 90 Days', '> 6M POC', 'Unnamed: 5', 'Unnamed: 6', 'Strike', 'Amount', 'Entry ', 'SL', 'Target']
+--------------------------------------------------
+Sheet: EMA Cons
+Columns: ['Date', 'Ticker', 'Strategy', 'Sector', 'Index', 'Result', 'Notes']
+--------------------------------------------------
+Sheet: Options
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4']
+--------------------------------------------------
+Sheet: Notes
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3']
+--------------------------------------------------
+Sheet: BO_Trades
+Columns: ['Ticker', 'Entry', 'Target(s)', 'SL', 'Target %', 'SL %', 'RR', 'Signal', 'Rating', 'SMA test ', 'Notes']
+--------------------------------------------------
+Sheet: 2SHSwing-HK
+Columns: ['Unnamed: 0', 'Unnamed: 1', 'Stock/Call/PUT', 'ema 9&21', 'Insidebar', 'buy', 'sell', 'Profit/Loss($)']
+--------------------------------------------------
