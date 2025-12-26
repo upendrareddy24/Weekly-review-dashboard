@@ -1,20 +1,27 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
 import sqlite3
 import yfinance as yf
 import pandas as pd
 import json
 import os
+from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 
-DB_PATH = "backend/stocks.db"
+# Use absolute path for DB for reliability
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "backend", "stocks.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/api/strategies', methods=['GET'])
 def get_strategies():
@@ -48,12 +55,25 @@ def get_setups():
     conn.close()
     return jsonify([dict(s) for s in setups])
 
-@app.route('/api/price/<symbol>', methods=['GET'])
-def get_price(symbol):
+@app.route('/api/prices', methods=['POST'])
+def get_prices():
+    data = request.json
+    symbols = data.get('symbols', [])
+    if not symbols:
+        return jsonify({})
+    
+    prices = {}
     try:
-        ticker = yf.Ticker(symbol)
-        price = ticker.fast_info['last_price']
-        return jsonify({"symbol": symbol, "price": round(price, 2)})
+        # Multi-ticker fetch is faster
+        tickers = yf.Tickers(' '.join(symbols))
+        for symbol in symbols:
+            try:
+                # Use faster data access if available
+                p = tickers.tickers[symbol].fast_info['last_price']
+                prices[symbol] = round(p, 2)
+            except:
+                prices[symbol] = "N/A"
+        return jsonify(prices)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -75,4 +95,8 @@ def get_ticker_history(symbol):
     return jsonify([dict(s) for s in setups])
 
 if __name__ == '__main__':
-    app.run(debug=True, port=int(os.getenv("PORT", 5012)))
+    # Initialize DB if not exists
+    if not os.path.exists(DB_PATH):
+        print("Database not found. Please run backend/import_data.py first.")
+    
+    app.run(debug=False, port=int(os.getenv("PORT", 5012)))
