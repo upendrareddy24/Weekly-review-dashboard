@@ -2,7 +2,6 @@ flask
 flask-cors
 pandas
 openpyxl
-sqlite3
 yfinance
 gunicorn
 python-dotenv

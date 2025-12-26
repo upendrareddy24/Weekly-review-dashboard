@@ -7,12 +7,15 @@ import json
 import os
 from datetime import datetime
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+# Adjust paths for Heroku where app.py is in backend/ and folders are in root
+app = Flask(__name__, 
+            template_folder='../templates', 
+            static_folder='../static')
 CORS(app)
 
 # Use absolute path for DB for reliability
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "backend", "stocks.db")
+DB_PATH = os.path.join(BASE_DIR, "stocks.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
