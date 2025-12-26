@@ -28,64 +28,236 @@
                 </div>
             </div>
 
-            <div class="nav-section">
-                <h3>Insights</h3>
-                <div class="strat-item" onclick="showAllTickers()">
-                    <span><i class="fas fa-database" style="margin-right: 10px;"></i> All Tickers</span>
+            <div class="strat-item" onclick="toggleWeeklyReview()">
+                <span><i class="fas fa-calendar-check" style="margin-right: 10px;"></i> Weekly Review</span>
+                <span class="status-badge status-buy" style="font-size: 0.6rem;">Focus</span>
+            </div>
+            <div class="strat-item" onclick="showAllTickers()">
+                <span><i class="fas fa-database" style="margin-right: 10px;"></i> All Tickers</span>
+            </div>
+    </div>
+
+    <div class="nav-section">
+        <h3>Insights</h3>
+        <div class="strat-item">
+            <span><i class="fas fa-history" style="margin-right: 10px;"></i> Recent Scans</span>
+        </div>
+    </div>
+
+    <div style="margin-top: auto;">
+        <div class="strat-item" style="border: 1px dashed var(--glass-border);">
+            <span><i class="fas fa-plus-circle" style="margin-right: 10px;"></i> Add Strategy</span>
+        </div>
+    </div>
+    </aside>
+
+    <main>
+        <header>
+            <div id="weeklyReviewSection" class="hidden">
+                <div class="hero-title" style="margin-bottom: 2rem;">Weekly <span class="accent-text">Market
+                        Review</span></div>
+
+                <div class="checklist-card">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">Review Checklist</h3>
+                    <div id="reviewChecklist">
+                        <div class="check-item"><input type="checkbox" id="c1"><label for="c1">Review Mag7 + Netflix
+                                (Core Portfolio)</label></div>
+                        <div class="check-item"><input type="checkbox" id="c2"><label for="c2">Review Indices (SPY,
+                                QQQ, IWM, VIX)</label></div>
+                        <div class="check-item"><input type="checkbox" id="c3"><label for="c3">Review Multi-Week
+                                Swings (3S/4P)</label></div>
+                        <div class="check-item"><input type="checkbox" id="c4"><label for="c4">Next Week Catalysts &
+                                Macro Data</label></div>
+                    </div>
                 </div>
-                <div class="strat-item">
-                    <span><i class="fas fa-history" style="margin-right: 10px;"></i> Recent Scans</span>
+
+                <div class="checklist-card">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">Market Catalysts</h3>
+                    <table class="catalyst-table" id="catalystTable">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Before Market (BM)</td>
+                                <td id="m-bm">-</td>
+                                <td id="t-bm">-</td>
+                                <td id="w-bm">-</td>
+                                <td id="th-bm">-</td>
+                                <td id="f-bm">-</td>
+                            </tr>
+                            <tr>
+                                <td>Market Hours (MH)</td>
+                                <td id="m-mh">-</td>
+                                <td id="t-mh">-</td>
+                                <td id="w-mh">-</td>
+                                <td id="th-mh">-</td>
+                                <td id="f-mh">-</td>
+                            </tr>
+                            <tr>
+                                <td>After Market (AM)</td>
+                                <td id="m-am">-</td>
+                                <td id="t-am">-</td>
+                                <td id="w-am">-</td>
+                                <td id="th-am">-</td>
+                                <td id="f-am">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="checklist-card">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">Trend Grid (Institutional Bias)
+                    </h3>
+                    <div class="trend-grid" id="trendGrid">
+                        <!-- Loaded dynamically -->
+                    </div>
                 </div>
             </div>
 
-            <div style="margin-top: auto;">
-                <div class="strat-item" style="border: 1px dashed var(--glass-border);">
-                    <span><i class="fas fa-plus-circle" style="margin-right: 10px;"></i> Add Strategy</span>
+            <div id="strategyView">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select id="filterStatus" onchange="applyFilters()">
+                            <option value="all">All Statuses</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sector</label>
+                        <select id="filterSector" onchange="applyFilters()">
+                            <option value="all">All Sectors</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Rating</label>
+                        <select id="filterRating" onchange="applyFilters()">
+                            <option value="all">All Ratings</option>
+                            <option value="5">5 Stars</option>
+                            <option value="4">4+ Stars</option>
+                            <option value="3">3+ Stars</option>
+                        </select>
+                    </div>
+                    <div style="margin-left: auto;">
+                        <button class="btn-primary" onclick="openSetupModal()"
+                            style="padding: 0.6rem 1.2rem; font-size: 0.8rem;">
+                            <i class="fas fa-plus"></i> New Setup
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </aside>
 
-        <main>
-            <header>
-                <div>
-                    <h2 class="hero-title" id="currentStratName">Global <span class="accent-text">Intelligence</span>
-                    </h2>
-                    <p id="stratSubtext" style="color: var(--text-secondary);">Real-time ticker tracking across your
-                        institutional strategies.</p>
+                <div id="stockGrid" class="stock-grid">
+                    <!-- Setups loaded here -->
+                    <div style="text-align: center; padding: 5rem; opacity: 0.5;">
+                        <i class="fas fa-circle-notch fa-spin"
+                            style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
+                        <p>Initializing Strat Radar...</p>
+                    </div>
                 </div>
-                <div id="lastUpdated" style="font-size: 0.8rem; color: var(--text-secondary);">
-                    Prices synced via Yahoo Finance
-                </div>
-            </header>
+    </main>
+    </div>
 
-            <div id="stockGrid" class="stock-grid">
-                <!-- Setups loaded here -->
-                <div style="text-align: center; padding: 5rem; opacity: 0.5;">
-                    <i class="fas fa-circle-notch fa-spin"
-                        style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
-                    <p>Initializing Strat Radar...</p>
-                </div>
+    <!-- Edit/Add Modal -->
+    <div id="setupModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Setup</h3>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="closeSetupModal()"></i>
             </div>
-        </main>
+            <form id="setupForm" onsubmit="saveSetup(event)">
+                <input type="hidden" id="setupId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Symbol</label>
+                        <input type="text" id="setupSymbol" required placeholder="e.g. TSLA">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="setupStatus" required>
+                            <option value="Wait">Wait</option>
+                            <option value="Buy">Buy</option>
+                            <option value="Hold">Hold</option>
+                            <option value="Exit">Exit</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rating (1-5)</label>
+                        <input type="number" id="setupRating" min="1" max="5" step="0.5" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label>Entry</label>
+                        <input type="text" id="setupEntry" placeholder="e.g. 150.50">
+                    </div>
+                    <div class="form-group">
+                        <label>Target</label>
+                        <input type="text" id="setupTarget" placeholder="e.g. 200.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Stop Loss</label>
+                        <input type="text" id="setupSL" placeholder="e.g. 140.00">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Comments</label>
+                    <textarea id="setupComments" rows="3" placeholder="Setup notes..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeSetupModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Setup</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         let allStrategies = [];
         let currentSetups = [];
+        let filteredSetups = [];
         let currentPrices = {};
+        let activeStrategyId = null;
 
         async function init() {
             try {
-                const res = await axios.get('/api/strategies');
-                allStrategies = res.data;
+                const resStrats = await axios.get('/api/strategies');
+                allStrategies = resStrats.data;
                 renderStrategies();
+
+                const resFilters = await axios.get('/api/filters');
+                populateFilters(resFilters.data);
+
                 if (allStrategies.length > 0) {
                     loadStrategy(allStrategies[0].id, allStrategies[0].name);
                 }
             } catch (err) {
                 console.error("Initialization failed:", err);
             }
+        }
+
+        function populateFilters(data) {
+            const statusFilter = document.getElementById('filterStatus');
+            const sectorFilter = document.getElementById('filterSector');
+
+            data.statuses.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.innerText = s;
+                statusFilter.appendChild(opt);
+            });
+
+            data.sectors.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.innerText = s;
+                sectorFilter.appendChild(opt);
+            });
         }
 
         function renderStrategies() {
@@ -99,6 +271,7 @@
         }
 
         async function loadStrategy(id, name) {
+            activeStrategyId = id;
             document.querySelectorAll('.strat-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`strat-${id}`)?.classList.add('active');
 
@@ -107,11 +280,26 @@
             try {
                 const res = await axios.get(`/api/setups?strategy_id=${id}`);
                 currentSetups = res.data;
-                renderSetups();
+                applyFilters();
                 syncPrices();
             } catch (err) {
                 console.error("Failed to load setups:", err);
             }
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('filterStatus').value;
+            const sector = document.getElementById('filterSector').value;
+            const rating = document.getElementById('filterRating').value;
+
+            filteredSetups = currentSetups.filter(s => {
+                const matchStatus = status === 'all' || s.status === status;
+                const matchSector = sector === 'all' || s.sector === sector;
+                const matchRating = rating === 'all' || parseFloat(s.rating) >= parseFloat(rating);
+                return matchStatus && matchSector && matchRating;
+            });
+
+            renderSetups();
         }
 
         async function syncPrices() {
@@ -138,12 +326,12 @@
 
         function renderSetups() {
             const grid = document.getElementById('stockGrid');
-            if (currentSetups.length === 0) {
-                grid.innerHTML = '<div style="text-align:center; padding: 5rem;"><p>No setups found for this strategy.</p></div>';
+            if (filteredSetups.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; padding: 5rem;"><p>No setups matching these filters.</p></div>';
                 return;
             }
 
-            grid.innerHTML = currentSetups.map((s, idx) => {
+            grid.innerHTML = filteredSetups.map((s, idx) => {
                 const statusClass = `status-${s.status.toLowerCase()}`;
                 const ratingStars = '★'.repeat(Math.round(parseFloat(s.rating) || 0)) + '☆'.repeat(5 - Math.round(parseFloat(s.rating) || 0));
 
@@ -155,7 +343,7 @@
                                 <span class="sector">${s.sector || "General"}</span>
                             </div>
                             <div class="price-group">
-                                <div class="price price-${s.symbol}">Loading...</div>
+                                <div class="price price-${s.symbol}">${currentPrices[s.symbol] ? '$' + currentPrices[s.symbol] : 'Loading...'}</div>
                                 <span class="status-badge ${statusClass}">${s.status}</span>
                             </div>
                         </div>
@@ -190,7 +378,7 @@
                             <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="viewHistory('${s.symbol}')">
                                 <i class="fas fa-history"></i> Timeline
                             </button>
-                            <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 1rem;">
+                            <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="editSetup(${s.id})">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                         </div>
@@ -199,16 +387,74 @@
             }).join('');
         }
 
+        function openSetupModal(setup = null) {
+            const modal = document.getElementById('setupModal');
+            const form = document.getElementById('setupForm');
+            modal.classList.remove('hidden');
+
+            if (setup) {
+                document.getElementById('modalTitle').innerText = `Edit ${setup.symbol}`;
+                document.getElementById('setupId').value = setup.id;
+                document.getElementById('setupSymbol').value = setup.symbol;
+                document.getElementById('setupSymbol').disabled = true;
+                document.getElementById('setupStatus').value = setup.status;
+                document.getElementById('setupRating').value = setup.rating;
+                document.getElementById('setupEntry').value = setup.entry;
+                document.getElementById('setupTarget').value = setup.target;
+                document.getElementById('setupSL').value = setup.sl;
+                document.getElementById('setupComments').value = setup.comments;
+            } else {
+                document.getElementById('modalTitle').innerText = "Add Setup";
+                form.reset();
+                document.getElementById('setupId').value = "";
+                document.getElementById('setupSymbol').disabled = false;
+            }
+        }
+
+        function closeSetupModal() {
+            document.getElementById('setupModal').classList.add('hidden');
+        }
+
+        function editSetup(id) {
+            const setup = currentSetups.find(s => s.id === id);
+            if (setup) openSetupModal(setup);
+        }
+
+        async function saveSetup(event) {
+            event.preventDefault();
+            const data = {
+                id: document.getElementById('setupId').value,
+                symbol: document.getElementById('setupSymbol').value,
+                strategy_id: activeStrategyId,
+                status: document.getElementById('setupStatus').value,
+                rating: document.getElementById('setupRating').value,
+                entry: document.getElementById('setupEntry').value,
+                target: document.getElementById('setupTarget').value,
+                sl: document.getElementById('setupSL').value,
+                comments: document.getElementById('setupComments').value,
+                score: document.getElementById('setupRating').value // Use rating as score for now
+            };
+
+            try {
+                await axios.post('/api/setups', data);
+                closeSetupModal();
+                loadStrategy(activeStrategyId, document.querySelector('.strat-item.active span').innerText);
+            } catch (err) {
+                alert("Failed to save setup: " + err.message);
+            }
+        }
+
         async function viewHistory(symbol) {
             try {
                 const res = await axios.get(`/api/ticker/${symbol}/history`);
                 const history = res.data;
-                // Simple alert for now, could be a modal
                 alert(`History for ${symbol}:\n\n` + history.map(h => `${h.date}: ${h.status} (${h.strategy_name})`).join('\n'));
             } catch (err) {
                 console.error("History fetch failed:", err);
             }
         }
+
+        init();
 
         init();
     </script>

@@ -77,22 +77,80 @@ def get_prices():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/api/ticker/<symbol>/history', methods=['GET'])
-def get_ticker_history(symbol):
+@app.route('/api/setups', methods=['POST'])
+def save_setup():
+    data = request.json
     conn = get_db_connection()
-    ticker = conn.execute('SELECT id FROM tickers WHERE symbol = ?', (symbol,)).fetchone()
-    if not ticker:
-        return jsonify({"error": "Ticker not found"}), 404
-    
-    setups = conn.execute("""
-        SELECT s.*, st.name as strategy_name
-        FROM setups s
-        JOIN strategies st ON s.strategy_id = st.id
-        WHERE s.ticker_id = ?
-        ORDER BY s.date DESC
-    """, (ticker['id'],)).fetchall()
+    try:
+        # If ID exists, update; otherwise, insert
+        if data.get('id'):
+            conn.execute("""
+                UPDATE setups SET 
+                status = ?, rating = ?, score = ?, entry = ?, 
+                target = ?, sl = ?, rr = ?, comments = ?, date = ?
+                WHERE id = ?
+            """, (data['status'], data['rating'], data['score'], data['entry'], 
+                  data['target'], data['sl'], data['rr'], data['comments'], 
+                  data.get('date', datetime.now().strftime('%Y-%m-%d')), data['id']))
+        else:
+            # Need to get ticker_id first
+            ticker = conn.execute('SELECT id FROM tickers WHERE symbol = ?', (data['symbol'],)).fetchone()
+            if not ticker:
+                # Create ticker on the fly if needed
+                cur = conn.execute('INSERT INTO tickers (symbol) VALUES (?)', (data['symbol'],))
+                ticker_id = cur.lastrowid
+            else:
+                ticker_id = ticker['id']
+            
+            conn.execute("""
+                INSERT INTO setups 
+                (ticker_id, strategy_id, date, status, rating, score, entry, target, sl, rr, comments)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (ticker_id, data['strategy_id'], data.get('date', datetime.now().strftime('%Y-%m-%d')),
+                  data['status'], data['rating'], data['score'], data['entry'], 
+                  data['target'], data['sl'], data['rr'], data['comments']))
+        
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/filters', methods=['GET'])
+def get_filters():
+    conn = get_db_connection()
+    sectors = conn.execute('SELECT DISTINCT sector FROM tickers WHERE sector IS NOT NULL').fetchall()
+    statuses = conn.execute('SELECT DISTINCT status FROM setups').fetchall()
     conn.close()
-    return jsonify([dict(s) for s in setups])
+    return jsonify({
+        "sectors": [s[0] for s in sectors] + ["General"],
+        "statuses": [s[0] for s in statuses]
+    })
+
+@app.route('/api/catalysts', methods=['GET'])
+def get_catalysts():
+    week = request.args.get('week', datetime.now().strftime('%Y-%W'))
+    conn = get_db_connection()
+    items = conn.execute('SELECT * FROM catalysts WHERE week_start = ?', (week,)).fetchall()
+    conn.close()
+    return jsonify([dict(i) for i in items])
+
+@app.route('/api/catalysts', methods=['POST'])
+def save_catalyst():
+    data = request.json
+    conn = get_db_connection()
+    try:
+        conn.execute("""
+            INSERT INTO catalysts (week_start, day, time_slot, event)
+            VALUES (?, ?, ?, ?)
+        """, (data['week'], data['day'], data['time_slot'], data['event']))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     # Initialize DB if not exists
