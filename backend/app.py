@@ -13,14 +13,30 @@ app = Flask(__name__,
             static_folder='../static')
 CORS(app)
 
-# Use absolute path for DB for reliability
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import urllib.parse
+
+# Heroku Postgres or Local SQLite
+DATABASE_URL = os.getenv('DATABASE_URL')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "stocks.db")
+SQLITE_DB_PATH = os.path.join(BASE_DIR, "stocks.db")
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if DATABASE_URL:
+        # PostgreSQL logic
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        return conn
+    else:
+        # SQLite fallback
+        conn = sqlite3.connect(SQLITE_DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+def get_db_cursor(conn):
+    if DATABASE_URL:
+        return conn.cursor(cursor_factory=RealDictCursor)
+    return conn.cursor()
 
 @app.route('/')
 def index():
