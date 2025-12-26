@@ -45,14 +45,18 @@ def index():
 @app.route('/api/strategies', methods=['GET'])
 def get_strategies():
     conn = get_db_connection()
-    strategies = conn.execute('SELECT * FROM strategies').fetchall()
+    cur = get_db_cursor(conn)
+    cur.execute('SELECT * FROM strategies')
+    strategies = cur.fetchall()
     conn.close()
     return jsonify([dict(s) for s in strategies])
 
 @app.route('/api/tickers', methods=['GET'])
 def get_tickers():
     conn = get_db_connection()
-    tickers = conn.execute('SELECT * FROM tickers').fetchall()
+    cur = get_db_cursor(conn)
+    cur.execute('SELECT * FROM tickers')
+    tickers = cur.fetchall()
     conn.close()
     return jsonify([dict(t) for t in tickers])
 
@@ -60,6 +64,7 @@ def get_tickers():
 def get_setups():
     strategy_id = request.args.get('strategy_id')
     conn = get_db_connection()
+    cur = get_db_cursor(conn)
     query = """
         SELECT s.*, t.symbol, t.sector, st.name as strategy_name
         FROM setups s
@@ -67,64 +72,44 @@ def get_setups():
         JOIN strategies st ON s.strategy_id = st.id
     """
     if strategy_id:
-        query += " WHERE s.strategy_id = ?"
-        setups = conn.execute(query, (strategy_id,)).fetchall()
+        p = "%s" if DATABASE_URL else "?"
+        query += f" WHERE s.strategy_id = {p}"
+        cur.execute(query, (strategy_id,))
     else:
-        setups = conn.execute(query).fetchall()
+        cur.execute(query)
+    setups = cur.fetchall()
     conn.close()
     return jsonify([dict(s) for s in setups])
-
-@app.route('/api/prices', methods=['POST'])
-def get_prices():
-    data = request.json
-    symbols = data.get('symbols', [])
-    if not symbols:
-        return jsonify({})
-    
-    prices = {}
-    try:
-        # Multi-ticker fetch is faster
-        tickers = yf.Tickers(' '.join(symbols))
-        for symbol in symbols:
-            try:
-                # Use faster data access if available
-                p = tickers.tickers[symbol].fast_info['last_price']
-                prices[symbol] = round(p, 2)
-            except:
-                prices[symbol] = "N/A"
-        return jsonify(prices)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
 @app.route('/api/setups', methods=['POST'])
 def save_setup():
     data = request.json
     conn = get_db_connection()
+    cur = get_db_cursor(conn)
+    p = "%s" if DATABASE_URL else "?"
     try:
-        # If ID exists, update; otherwise, insert
         if data.get('id'):
-            conn.execute("""
+            cur.execute(f"""
                 UPDATE setups SET 
-                status = ?, rating = ?, score = ?, entry = ?, 
-                target = ?, sl = ?, rr = ?, comments = ?, date = ?
-                WHERE id = ?
+                status = {p}, rating = {p}, score = {p}, entry = {p}, 
+                target = {p}, sl = {p}, rr = {p}, comments = {p}, date = {p}
+                WHERE id = {p}
             """, (data['status'], data['rating'], data['score'], data['entry'], 
                   data['target'], data['sl'], data['rr'], data['comments'], 
                   data.get('date', datetime.now().strftime('%Y-%m-%d')), data['id']))
         else:
-            # Need to get ticker_id first
-            ticker = conn.execute('SELECT id FROM tickers WHERE symbol = ?', (data['symbol'],)).fetchone()
+            cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (data['symbol'],))
+            ticker = cur.fetchone()
             if not ticker:
-                # Create ticker on the fly if needed
-                cur = conn.execute('INSERT INTO tickers (symbol) VALUES (?)', (data['symbol'],))
-                ticker_id = cur.lastrowid
+                cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (data['symbol'],))
+                ticker_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
             else:
                 ticker_id = ticker['id']
             
-            conn.execute("""
+            cur.execute(f"""
                 INSERT INTO setups 
                 (ticker_id, strategy_id, date, status, rating, score, entry, target, sl, rr, comments)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
             """, (ticker_id, data['strategy_id'], data.get('date', datetime.now().strftime('%Y-%m-%d')),
                   data['status'], data['rating'], data['score'], data['entry'], 
                   data['target'], data['sl'], data['rr'], data['comments']))
@@ -139,19 +124,25 @@ def save_setup():
 @app.route('/api/filters', methods=['GET'])
 def get_filters():
     conn = get_db_connection()
-    sectors = conn.execute('SELECT DISTINCT sector FROM tickers WHERE sector IS NOT NULL').fetchall()
-    statuses = conn.execute('SELECT DISTINCT status FROM setups').fetchall()
+    cur = get_db_cursor(conn)
+    cur.execute('SELECT DISTINCT sector FROM tickers WHERE sector IS NOT NULL')
+    sectors = cur.fetchall()
+    cur.execute('SELECT DISTINCT status FROM setups')
+    statuses = cur.fetchall()
     conn.close()
     return jsonify({
-        "sectors": [s[0] for s in sectors] + ["General"],
-        "statuses": [s[0] for s in statuses]
+        "sectors": [s['sector'] if DATABASE_URL else s[0] for s in sectors] + ["General"],
+        "statuses": [s['status'] if DATABASE_URL else s[0] for s in statuses]
     })
 
 @app.route('/api/catalysts', methods=['GET'])
 def get_catalysts():
     week = request.args.get('week', datetime.now().strftime('%Y-%W'))
     conn = get_db_connection()
-    items = conn.execute('SELECT * FROM catalysts WHERE week_start = ?', (week,)).fetchall()
+    cur = get_db_cursor(conn)
+    p = "%s" if DATABASE_URL else "?"
+    cur.execute(f'SELECT * FROM catalysts WHERE week_start = {p}', (week,))
+    items = cur.fetchall()
     conn.close()
     return jsonify([dict(i) for i in items])
 
@@ -159,10 +150,12 @@ def get_catalysts():
 def save_catalyst():
     data = request.json
     conn = get_db_connection()
+    cur = get_db_cursor(conn)
+    p = "%s" if DATABASE_URL else "?"
     try:
-        conn.execute("""
+        cur.execute(f"""
             INSERT INTO catalysts (week_start, day, time_slot, event)
-            VALUES (?, ?, ?, ?)
+            VALUES ({p}, {p}, {p}, {p})
         """, (data['week'], data['day'], data['time_slot'], data['event']))
         conn.commit()
         return jsonify({"success": True})
