@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SQLITE_PATH = "backend/stocks.db"
+SQLITE_PATH = "d:/AntiGravity/stock_tracker/backend/stocks.db"
 POSTGRES_URL = os.getenv("DATABASE_URL")
 
 def migrate():
