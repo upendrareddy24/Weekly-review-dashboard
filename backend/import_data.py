@@ -105,14 +105,15 @@ def import_sheet(conn, sheet_name, strategy_name):
                 INSERT INTO setups 
                 (ticker_id, strategy_id, date, source, strategy_name, buy_date, category, 
                  pattern_stage, score_text, highlights, breakout_zone, target_zone, 
-                 invalidation, sector, horizon, confidence_stars, buy_wait_status, state)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 invalidation, horizon, confidence_stars, buy_wait_status, state)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (ticker_id, strategy_id, datetime.now().strftime('%Y-%m-%d'), 
                    source, strat_field, str(buy_date), category, pattern_stage, 
                    score_text, highlights, breakout_zone, target_zone, invalidation, 
-                   sector, horizon, confidence_stars, buy_wait, 'ACTIVE'))
+                   horizon, confidence_stars, buy_wait, 'ACTIVE'))
         
         conn.commit()
+        print(f"Successfully imported {len(df)} rows from {sheet_name}.")
     except Exception as e:
         print(f"Error importing {sheet_name}: {e}")
     except Exception as e:
