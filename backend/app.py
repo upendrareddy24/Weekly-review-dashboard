@@ -5,6 +5,7 @@ import yfinance as yf
 import pandas as pd
 import json
 import os
+import traceback
 from datetime import datetime
 
 # Adjust paths for Heroku where app.py is in backend/ and folders are in root
@@ -159,6 +160,14 @@ def save_setup():
     conn = get_db_connection()
     cur = get_db_cursor(conn)
     p = "%s" if DATABASE_URL else "?"
+    
+    # Sanitize inputs: Convert empty strings to None for DB compatibility
+    for key, val in list(data.items()):
+        if val == "":
+            data[key] = None
+            
+    print(f"DEBUG SAVE_SETUP: {data}")
+
     try:
         if data.get('id'):
             # Flexible update for any column passed in the JSON
@@ -167,16 +176,21 @@ def save_setup():
             # Special handling for symbol update -> change ticker_id
             if 'symbol' in data:
                 symbol = data.pop('symbol')
-                cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (symbol,))
-                ticker = cur.fetchone()
-                if not ticker:
-                    cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (symbol,))
-                    ticker_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
+                if symbol: # Only if symbol is not None
+                    cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (symbol,))
+                    ticker = cur.fetchone()
+                    if not ticker:
+                        cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (symbol,))
+                        ticker_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
+                    else:
+                        ticker_id = ticker['id']
+                    data['ticker_id'] = ticker_id
                 else:
-                    ticker_id = ticker['id']
-                data['ticker_id'] = ticker_id
+                    # If symbol was cleared, maybe we shouldn't update ticker_id or handle it? 
+                    # For now if symbol is None, we just don't update ticker_id unless explicitly handled logic exists.
+                    pass 
 
-            columns = data.keys()
+            columns = list(data.keys())
             values = list(data.values())
             
             set_clause = ", ".join([f"{col} = {p}" for col in columns])
@@ -208,7 +222,8 @@ def save_setup():
         conn.commit()
         return jsonify({"success": True, "id": new_id if not data.get('id') else data.get('id')})
     except Exception as e:
-        print(f"ERROR: {e}")
+        print(f"ERROR Save_Setup: {e}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
     finally:
         conn.close()
