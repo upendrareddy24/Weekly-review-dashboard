@@ -52,6 +52,7 @@ def get_strategies():
         conn.close()
         return jsonify([dict(s) for s in strategies])
     except Exception as e:
+        print(f"!!! STRATEGIES ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/tickers', methods=['GET'])
@@ -64,6 +65,7 @@ def get_tickers():
         conn.close()
         return jsonify([dict(t) for t in tickers])
     except Exception as e:
+        print(f"!!! TICKERS ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/setups', methods=['GET'])
@@ -144,6 +146,7 @@ def market_regime():
         conn.close()
         return jsonify(dict(regime) if regime else {"regime": "Neutral", "notes": "No snapshot taken."})
     except Exception as e:
+        print(f"!!! REGIME ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/setups', methods=['POST'])
@@ -215,6 +218,7 @@ def get_catalysts():
         conn.close()
         return jsonify([dict(i) for i in items])
     except Exception as e:
+        print(f"!!! CATALYSTS ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/macro_reviews', methods=['GET'])
@@ -299,4 +303,4 @@ if __name__ == '__main__':
     if not os.path.exists(SQLITE_DB_PATH):
         print(f"Database not found at {SQLITE_DB_PATH}. Please run backend/import_data.py first.")
     
-    app.run(debug=False, port=int(os.getenv("PORT", 5012)))
+    app.run(debug=True, port=int(os.getenv("PORT", 5012)))

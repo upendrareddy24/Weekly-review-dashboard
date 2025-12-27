@@ -367,11 +367,14 @@
                 const data = res.data;
 
                 if (type === 'catalyst') {
-                    // Reconstruct grid from flattened rows
-                    const gridRes = await axios.get(`/api/catalysts?week_number=${activeWeek}`);
-                    const rows = gridRes.data;
-                    const slots = ['BM (Before Market)', 'MH (Market Hours)', 'AM (After Market)'];
-                    const reconstructed = slots.map(s => {
+                    // Dynamic Slot Reconstruction
+                    const rows = data;
+                    const uniqueSlots = [...new Set(rows.map(r => r.time_slot))];
+
+                    // Default slots if none exist
+                    if (uniqueSlots.length === 0) uniqueSlots.push('BM (Before Market)', 'MH (Market Hours)', 'AM (After Market)');
+
+                    const reconstructed = uniqueSlots.map(s => {
                         const rowData = { slot: s, m: '', t: '', w: '', th: '', f: '' };
                         rows.filter(r => r.time_slot === s).forEach(r => {
                             if (r.day === 'Monday') rowData.m = r.event;
