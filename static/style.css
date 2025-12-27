@@ -175,6 +175,20 @@ aside {
     background: rgba(255, 255, 255, 0.02);
 }
 
+.highlight-row {
+    animation: highlight-pulse 3s ease-out;
+}
+
+@keyframes highlight-pulse {
+    0% {
+        background: rgba(59, 130, 246, 0.5);
+    }
+
+    100% {
+        background: transparent;
+    }
+}
+
 .symbol-cell {
     font-weight: 800;
     color: #fff;

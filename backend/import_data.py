@@ -123,19 +123,16 @@ if __name__ == "__main__":
     
     # Define which sheets to import and their strategy/bucket names
     sheets_to_import = [
-        ('3SWING-PF', 'Swing Portfolio', '3Swing'),
-        ('4POS-BO-HK', 'Positional Breakout (HK)', '4POS'),
-        ('4Portfolio_10', 'Portfolio 10', 'Holdings'),
-        ('5POS-HV-HK', 'HV Positional (HK)', '4POS'),
-        ('5HV-PF', 'HV Portfolio', 'Holdings'),
-        ('6POS-PAT-HK', 'Pattern Positional (HK)', '4POS'),
-        ('6PAT-PF', 'Pattern Portfolio', 'Holdings'),
-        ('7INV-HK', 'Invalidation (HK)', '4POS'),
-        ('7INV-PF', 'Invalidation Portfolio', 'Holdings'),
-        ('3Swing-HK', 'Weekly Breakout (3S)', '3Swing'),
-        ('EMA Cons', 'EMA Consolidation', '3Swing'),
-        ('BO_Trades', 'Breakout Trades', '3Swing'),
-        ('1 week swings', 'Weekly Swings', 'Holdings')
+        ('3Swing-HK', '3Swing-HK', '3Swing'),
+        ('3SWING-PF', '3SWING-PF', '3Swing'),
+        ('4POS-BO-HK', '4POS-BO-HK', '4POS'),
+        ('4Portfolio_10', '4Portfolio_10', 'Holdings'),
+        ('5POS-HV-HK', '5POS-HV-HK', '4POS'),
+        ('5HV-PF', '5HV-PF', 'Holdings'),
+        ('6POS-PAT-HK', '6POS-PAT-HK', '4POS'),
+        ('6PAT-PF', '6PAT-PF', 'Holdings'),
+        ('7INV-HK', '7INV-HK', '4POS'),
+        ('7INV-PF', '7INV-PF', 'Holdings')
     ]
     
     for sheet, strat, bucket in sheets_to_import:
