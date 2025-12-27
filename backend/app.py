@@ -202,10 +202,11 @@ def save_setup():
             
             cols = ", ".join(data.keys())
             placeholders = ", ".join([p] * len(data))
-            cur.execute(f"INSERT INTO setups ({cols}) VALUES ({placeholders})", tuple(data.values()))
+            cur.execute(f"INSERT INTO setups ({cols}) VALUES ({placeholders}){' RETURNING id' if DATABASE_URL else ''}", tuple(data.values()))
+            new_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
         
         conn.commit()
-        return jsonify({"success": True})
+        return jsonify({"success": True, "id": new_id if not data.get('id') else data.get('id')})
     except Exception as e:
         print(f"ERROR: {e}")
         return jsonify({"error": str(e)}), 400

@@ -161,10 +161,50 @@ aside {
     font-size: 0.75rem;
     text-transform: uppercase;
     color: var(--text-secondary);
-    border-bottom: 1px solid var(--glass-border);
+    border-bottom: 2px solid var(--glass-border);
+    position: relative;
+    white-space: nowrap;
 }
 
-.data-table td {
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.header-action {
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+}
+
+.header-action:hover,
+.header-action.active {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+.filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+}
+
+.filter-dropdown select,
+.filter-dropdown input {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.symbol-cell {
     padding: 12px 15px;
     border-bottom: 1px solid var(--glass-border);
     border-left: 1px solid rgba(255, 255, 255, 0.05);

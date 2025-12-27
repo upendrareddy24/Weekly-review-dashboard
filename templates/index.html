@@ -317,6 +317,11 @@
         let activeStratId = null;
         let activeBucket = null;
         let currentSetups = []; // Buffer for filtering
+        let sortCol = 'symbol';
+        let sortDir = 'asc';
+        let columnFilters = {};
+        const fieldMap = ['source', 'strategy_name', 'buy_date', 'symbol', 'category', 'pattern_stage', 'score_text', 'highlights', 'breakout_zone', 'target_zone', 'invalidation', 'sector', 'horizon', 'confidence_stars', 'buy_wait_status'];
+
         let mag7Tickers = ['AAPL', 'AMD', 'AMZN', 'AVGO', 'GOOGL', 'META', 'MSFT', 'NFLX', 'NVDA', 'TSLA'];
         let macroIndices = ['SPY', 'QQQ', 'IWM', 'GOLD', 'VIX', 'BTC', 'ETHE', 'FXI'];
 
@@ -526,13 +531,27 @@
                 }
 
                 try {
-                    await axios.post('/api/setups', {
+                    const res = await axios.post('/api/setups', {
                         symbol,
                         strategy_id: activeStratId,
                         bucket: activeBucket
                     });
-                    if (activeBucket) loadBucket(activeBucket);
-                    else loadStrategyTable(activeStratId);
+                    const newId = res.data.id;
+
+                    if (activeBucket) await loadBucket(activeBucket);
+                    else await loadStrategyTable(activeStratId);
+
+                    // Clear filters to ensure new one is visible
+                    clearHubFilters();
+
+                    setTimeout(() => {
+                        const row = document.querySelector(`tr[data-id="${newId}"]`);
+                        if (row) {
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            row.classList.add('highlight-row');
+                            setTimeout(() => row.classList.remove('highlight-row'), 3000);
+                        }
+                    }, 500);
                 } catch (err) {
                     console.error("Add Setup Error:", err);
                 }
@@ -686,18 +705,85 @@
         function renderExcelHeaders() {
             const head = document.getElementById('tableHeaders');
             const defaultCols = ['ChatGPT', 'Strategy', 'BUY Date', 'Stock', 'Category', 'Pattern Stage', 'Score', 'Highlights', 'Breakout Zone', 'Target Zone', 'Invalidation', 'Sector', 'Horizon', 'Confidence', 'Buy / Wait'];
-
-            // Allow user to rename headers - save to localStorage
             let customCols = JSON.parse(localStorage.getItem('stratHubHeaders')) || defaultCols;
 
-            head.innerHTML = customCols.map((c, i) => `
-                <th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; border-bottom: 2px solid rgba(255,255,255,0.05);">
+            head.innerHTML = customCols.map((c, i) => {
+                const field = fieldMap[i];
+                const isSorting = sortCol === field;
+                const hasFilter = columnFilters[field];
+
+                return `
+                <th style="vertical-align: top;">
                     <input type="text" value="${c}" 
-                           title="Click to rename this column"
-                           style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-transform: inherit; width: 100%; outline: none; padding: 4px; border-radius: 4px;"
+                           title="Click to rename"
+                           style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-transform: inherit; width: 100%; outline: none; padding: 4px; border-radius: 4px; margin-bottom: 5px;"
                            onchange="updateHeader(${i}, this.value)">
+                    <div class="header-controls">
+                        <i class="fas fa-sort-amount-${sortDir === 'asc' && isSorting ? 'up' : 'down'} header-action ${isSorting ? 'active' : ''}" 
+                           title="Sort ${c}" onclick="toggleSort('${field}')"></i>
+                        
+                        <div style="position: relative; display: inline-block;">
+                            <i class="fas fa-filter header-action ${hasFilter ? 'active' : ''}" 
+                               title="Filter ${c}" onclick="toggleFilterMenu(event, '${field}')"></i>
+                        </div>
+                    </div>
                 </th>
-            `).join('');
+                `;
+            }).join('');
+        }
+
+        function toggleSort(field) {
+            if (sortCol === field) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortCol = field;
+                sortDir = 'asc';
+            }
+            applyHubFilters();
+            renderExcelHeaders();
+        }
+
+        function toggleFilterMenu(event, field) {
+            event.stopPropagation();
+            const existing = document.getElementById('activeFilterMenu');
+            if (existing) existing.remove();
+
+            const menu = document.createElement('div');
+            menu.id = 'activeFilterMenu';
+            menu.className = 'filter-dropdown';
+            menu.style.left = `${event.clientX - 100}px`;
+            menu.style.top = `${event.clientY + 20}px`;
+            menu.style.position = 'fixed';
+
+            const currentVal = columnFilters[field] || '';
+
+            menu.innerHTML = `
+                <div style="font-weight: 700; margin-bottom: 10px; font-size: 0.7rem; color: var(--accent-primary);">FILTER ${field.toUpperCase()}</div>
+                <input type="text" id="colFilterInput" placeholder="Match text or math (>5)..." value="${currentVal}" class="input-inline" style="border: 1px solid var(--glass-border); padding: 8px;">
+                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                    <button class="btn-primary" style="flex: 1; font-size: 0.65rem; padding: 5px;" onclick="setColFilter('${field}')">Apply</button>
+                    <button class="btn-secondary" style="flex: 1; font-size: 0.65rem; padding: 5px;" onclick="clearColFilter('${field}')">Clear</button>
+                </div>
+            `;
+            document.body.appendChild(menu);
+
+            // Close on click outside
+            const closer = () => { menu.remove(); document.removeEventListener('click', closer); };
+            setTimeout(() => document.addEventListener('click', closer), 10);
+        }
+
+        function setColFilter(field) {
+            const val = document.getElementById('colFilterInput').value;
+            if (val) columnFilters[field] = val;
+            else delete columnFilters[field];
+            applyHubFilters();
+            renderExcelHeaders();
+        }
+
+        function clearColFilter(field) {
+            delete columnFilters[field];
+            applyHubFilters();
+            renderExcelHeaders();
         }
 
         function updateHeader(index, val) {
@@ -749,11 +835,61 @@
             const query = document.getElementById('hubSearch').value.toLowerCase().trim();
             const stats = document.getElementById('filterStats');
 
-            let filtered = currentSetups;
+            let filtered = [...currentSetups];
 
+            // 1. Column-specific Filters
+            Object.keys(columnFilters).forEach(field => {
+                const fVal = columnFilters[field].toLowerCase();
+                filtered = filtered.filter(s => {
+                    const cellVal = String(s[field] || (field === 'strategy_name' ? (s.strategy_name || s.parent_strategy) : '')).toLowerCase();
+
+                    // Handle Math logic (>=, <=, >, <)
+                    if (fVal.match(/^[><=]/)) {
+                        const operator = fVal.match(/[><=]+/)[0];
+                        const compareVal = parseFloat(fVal.replace(operator, '').trim());
+
+                        let numVal = parseFloat(cellVal);
+                        if (field === 'score_text') numVal = parseFloat(s.score_text || 0);
+
+                        if (!isNaN(numVal) && !isNaN(compareVal)) {
+                            if (operator === '>') return numVal > compareVal;
+                            if (operator === '>=') return numVal >= compareVal;
+                            if (operator === '<') return numVal < compareVal;
+                            if (operator === '<=') return numVal <= compareVal;
+                            if (operator === '=') return numVal === compareVal;
+                        }
+                    }
+
+                    return cellVal.includes(fVal);
+                });
+            });
+
+            // 2. Sorting
+            filtered.sort((a, b) => {
+                let valA = a[sortCol] || '';
+                let valB = b[sortCol] || '';
+
+                if (sortCol === 'strategy_name') {
+                    valA = a.strategy_name || a.parent_strategy || '';
+                    valB = b.strategy_name || b.parent_strategy || '';
+                }
+
+                // Numeric Sort for Score/Confidence/Prices
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB) && sortCol !== 'symbol') {
+                    return sortDir === 'asc' ? numA - numB : numB - numA;
+                }
+
+                return sortDir === 'asc'
+                    ? String(valA).localeCompare(String(valB))
+                    : String(valB).localeCompare(String(valA));
+            });
+
+            // 3. Universal Search
             if (query) {
-                filtered = currentSetups.filter(s => {
-                    // 1. Check for specific syntax like "score > 5" or "status:buy"
+                filtered = filtered.filter(s => {
+                    // Check for specific syntax like "score > 5" or "status:buy"
                     if (query.includes('>') || query.includes('<') || query.includes('=')) {
                         const parts = query.split(/[><=]/);
                         const field = parts[0].trim().replace(' ', '_');
@@ -781,7 +917,6 @@
                         return String(target).toLowerCase().includes(v);
                     }
 
-                    // 2. Default: Search across all relevant text fields
                     const searchStr = `${s.symbol} ${s.sector} ${s.category} ${s.score_text} ${s.highlights} ${s.buy_wait_status} ${s.strategy_name || s.parent_strategy}`.toLowerCase();
                     return searchStr.includes(query);
                 });
@@ -848,9 +983,16 @@
             }
         }
 
+        delete columnFilters[field];
+        applyHubFilters();
+        renderExcelHeaders();
+        }
+
         function clearHubFilters() {
             document.getElementById('hubSearch').value = '';
+            columnFilters = {};
             applyHubFilters();
+            renderExcelHeaders();
         }
 
         async function updateTickerField(id, symbol) {
