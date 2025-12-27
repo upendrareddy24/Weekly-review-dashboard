@@ -12,155 +12,288 @@
 </head>
 
 <body>
-    <div class="mesh-bg"></div>
-
-    <div class="container">
-        <aside>
-            <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span class="logo-text">STOCKSTRAT AI</span>
-            </div>
-
-            <div class="nav-section">
-                <h3>Active Strategies</h3>
-                <div id="strategyList">
-                    <!-- Loaded dynamically -->
-                </div>
-            </div>
-
-            <div class="strat-item" onclick="toggleWeeklyReview()">
-                <span><i class="fas fa-calendar-check" style="margin-right: 10px;"></i> Weekly Review</span>
-                <span class="status-badge status-buy" style="font-size: 0.6rem;">Focus</span>
-            </div>
-            <div class="strat-item" onclick="showAllTickers()">
-                <span><i class="fas fa-database" style="margin-right: 10px;"></i> All Tickers</span>
-            </div>
+    <div class="regime-banner">
+        <div>Market Regime: <span class="regime-status" id="marketRegime">Loading...</span></div>
+        <div id="regimeNotes" style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8;"></div>
     </div>
 
-    <div class="nav-section">
-        <h3>Insights</h3>
-        <div class="strat-item">
-            <span><i class="fas fa-history" style="margin-right: 10px;"></i> Recent Scans</span>
-        </div>
-    </div>
+    <div class="container" style="display: flex; min-height: 100vh;">
+        <aside
+            style="width: 240px; border-right: 1px solid var(--glass-border); padding: 1.5rem; background: var(--sidebar-bg); position: sticky; top: 0; height: 100vh;">
+            <div class="logo" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-terminal" style="color: var(--accent-primary);"></i>
+                <span class="logo-text" style="font-size: 1rem; font-weight: 900; letter-spacing: 1px;">STOCKSTRAT
+                    COCKPIT</span>
+            </div>
 
-    <div style="margin-top: auto;">
-        <div class="strat-item" style="border: 1px dashed var(--glass-border);">
-            <span><i class="fas fa-plus-circle" style="margin-right: 10px;"></i> Add Strategy</span>
-        </div>
-    </div>
-    </aside>
-
-    <main>
-        <header>
-            <div id="weeklyReviewSection" class="hidden">
-                <div class="hero-title" style="margin-bottom: 2rem;">Weekly <span class="accent-text">Market
-                        Review</span></div>
-
-                <div class="checklist-card">
-                    <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">Review Checklist</h3>
-                    <div id="reviewChecklist">
-                        <div class="check-item"><input type="checkbox" id="c1"><label for="c1">Review Mag7 + Netflix
-                                (Core Portfolio)</label></div>
-                        <div class="check-item"><input type="checkbox" id="c2"><label for="c2">Review Indices (SPY,
-                                QQQ, IWM, VIX)</label></div>
-                        <div class="check-item"><input type="checkbox" id="c3"><label for="c3">Review Multi-Week
-                                Swings (3S/4P)</label></div>
-                        <div class="check-item"><input type="checkbox" id="c4"><label for="c4">Next Week Catalysts &
-                                Macro Data</label></div>
+            <nav>
+                <div class="nav-section" style="margin-bottom: 2rem;">
+                    <h3
+                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.6;">
+                        Attention</h3>
+                    <div id="attentionBtn" class="strat-item active" onclick="loadAttentionList()"
+                        style="cursor: pointer; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-bolt" style="margin-right: 10px; color: var(--warning);"></i> Needs
+                            Review</span>
+                        <span id="attentionCount" class="state-badge state-triggered">0</span>
                     </div>
                 </div>
 
-                <div class="checklist-card">
-                    <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">Market Catalysts</h3>
-                    <table class="catalyst-table" id="catalystTable">
+                <div class="nav-section" style="margin-bottom: 2rem;">
+                    <h3
+                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.6;">
+                        Tactical Buckets</h3>
+                    <div id="bucketList">
+                        <div class="strat-item" onclick="loadBucket('Holdings')"
+                            style="cursor: pointer; padding: 10px; border-radius: 4px;">Holdings</div>
+                        <div class="strat-item" onclick="loadBucket('3Swing')"
+                            style="cursor: pointer; padding: 10px; border-radius: 4px;">3Swing Swings</div>
+                        <div class="strat-item" onclick="loadBucket('4POS')"
+                            style="cursor: pointer; padding: 10px; border-radius: 4px;">4POS Positional</div>
+                        <div class="strat-item" onclick="loadBucket('Options')"
+                            style="cursor: pointer; padding: 10px; border-radius: 4px;">Options Alpha</div>
+                    </div>
+                </div>
+
+                <div class="nav-section" style="margin-top: auto;">
+                    <h3
+                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.6;">
+                        Command</h3>
+                    <div class="strat-item" onclick="toggleWeeklyReview()"
+                        style="cursor: pointer; padding: 10px; border-radius: 4px;">
+                        <span><i class="fas fa-calendar-alt" style="margin-right: 10px;"></i> Market Snapshot</span>
+                    </div>
+                    <div class="strat-item" onclick="openSetupModal()"
+                        style="cursor: pointer; padding: 10px; border-radius: 4px;">
+                        <span><i class="fas fa-plus-circle" style="margin-right: 10px;"></i> Quick Insert</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <main style="flex: 1; padding: 2rem; overflow-y: auto;">
+            <!-- Wizard Navigation -->
+            <div id="wizardHeader"
+                style="display: flex; gap: 2rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+                <div class="wizard-step active" id="step1Tab" onclick="goToStep(1)">1. Select Week</div>
+                <div class="wizard-step" id="step2Tab" onclick="goToStep(2)">2. Catalyst Radar</div>
+                <div class="wizard-step" id="step3Tab" onclick="goToStep(3)">3. Sector Strength</div>
+                <div class="wizard-step" id="step4Tab" onclick="goToStep(4)">4. Mag 7 Review</div>
+                <div class="wizard-step" id="step5Tab" onclick="goToStep(5)">5. Strategy Hub</div>
+            </div>
+
+            <!-- STEP 1: WEEK SELECTOR -->
+            <div id="step1" class="wizard-content">
+                <div class="hero-title" style="margin-bottom: 2rem; font-size: 1.5rem;">Weekly <span
+                        class="accent-text">Review Period</span></div>
+                <div style="display: grid; grid-template-columns: repeat(13, 1fr); gap: 10px;" id="weekGrid">
+                    <!-- Javascript will populate 52 weeks -->
+                </div>
+            </div>
+
+            <!-- STEP 2: WEEKLY CATALYST RADAR -->
+            <div id="step2" class="wizard-content hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div class="hero-title" style="font-size: 1.5rem;">Weekly <span class="accent-text">Catalyst
+                            Radar</span></div>
+                    <button class="btn-primary" onclick="goToStep(3)">Next: Macro Review <i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
+                <div class="table-container"
+                    style="background: var(--card-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Period</th>
-                                <th>Mon</th>
-                                <th>Tue</th>
-                                <th>Wed</th>
-                                <th>Thu</th>
-                                <th>Fri</th>
+                                <th style="width: 150px;">Time Slot</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th style="width: 50px;"></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="catalystBody">
+                            <!-- Rows like BM, MH, AM + Dynamic Addition -->
+                        </tbody>
+                    </table>
+                    <div
+                        style="padding: 1rem; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn-secondary" onclick="addTableRow('catalystBody')"><i class="fas fa-plus"></i>
+                            Add Time Slot</button>
+                        <button class="btn-primary" onclick="saveWizardStep('catalyst')"
+                            style="background: var(--accent-success);"><i class="fas fa-save"></i> Save Catalyst
+                            Radar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: MACRO & INDICES ANALYSIS -->
+            <div id="step3" class="wizard-content hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div class="hero-title" style="font-size: 1.5rem;">Macro <span class="accent-text">& Indices
+                            Review</span></div>
+                    <button class="btn-primary" onclick="goToStep(4)">Next: Focus Radar <i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
+                <div class="table-container"
+                    style="background: var(--card-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <td>Before Market (BM)</td>
-                                <td id="m-bm">-</td>
-                                <td id="t-bm">-</td>
-                                <td id="w-bm">-</td>
-                                <td id="th-bm">-</td>
-                                <td id="f-bm">-</td>
+                                <th style="width: 100px;">Ticker</th>
+                                <th style="width: 250px;">Trend (Long/Short)</th>
+                                <th>Trade / Notes</th>
+                                <th style="width: 80px;">Entry</th>
+                                <th style="width: 80px;">Exit</th>
+                                <th style="width: 80px;">SL</th>
+                                <th>Tickers</th>
+                                <th style="width: 50px;"></th>
                             </tr>
+                        </thead>
+                        <tbody id="macroBody">
+                            <!-- Dynamic Rows (SPY, QQQ, IWM, etc.) -->
+                        </tbody>
+                    </table>
+                    <div
+                        style="padding: 1rem; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn-secondary" onclick="addTableRow('macroBody')"><i class="fas fa-plus"></i> Add
+                            custom index</button>
+                        <button class="btn-primary" onclick="saveWizardStep('macro')"
+                            style="background: var(--accent-success);"><i class="fas fa-save"></i> Save Macro
+                            Review</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: CORE FOCUS RADAR -->
+            <div id="step4" class="wizard-content hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div class="hero-title" style="font-size: 1.5rem;">Focus <span class="accent-text">Radar (Mag
+                            7+)</span></div>
+                    <button class="btn-primary" onclick="goToStep(5)">Final: Strategy Hub <i
+                            class="fas fa-arrow-right"></i></button>
+                </div>
+                <div class="table-container"
+                    style="background: var(--card-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <td>Market Hours (MH)</td>
-                                <td id="m-mh">-</td>
-                                <td id="t-mh">-</td>
-                                <td id="w-mh">-</td>
-                                <td id="th-mh">-</td>
-                                <td id="f-mh">-</td>
+                                <th style="width: 100px;">Stock</th>
+                                <th style="width: 120px;">Trend</th>
+                                <th style="width: 100px;">Entry</th>
+                                <th style="width: 120px;">Target</th>
+                                <th style="width: 100px;">SL</th>
+                                <th>Tactical Comments</th>
+                                <th style="width: 50px;"></th>
                             </tr>
-                            <tr>
-                                <td>After Market (AM)</td>
-                                <td id="m-am">-</td>
-                                <td id="t-am">-</td>
-                                <td id="w-am">-</td>
-                                <td id="th-am">-</td>
-                                <td id="f-am">-</td>
+                        </thead>
+                        <tbody id="focusBody">
+                            <!-- Dynamic Focus Tickers (AAPL, NVDA, etc.) -->
+                        </tbody>
+                    </table>
+                    <div
+                        style="padding: 1rem; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
+                        <button class="btn-secondary" onclick="addTableRow('focusBody')"><i class="fas fa-plus"></i> Add
+                            Focus Ticker</button>
+                        <button class="btn-primary" onclick="saveWizardStep('focus')"
+                            style="background: var(--accent-success);"><i class="fas fa-save"></i> Save Focus
+                            Radar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: STRATEGY HUB -->
+            <div id="step5" class="wizard-content hidden">
+                <div class="filter-bar"
+                    style="border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                    <div id="strategyTabs" style="display: flex; gap: 10px;">
+                        <!-- Strategy tabs (3S, 4P, etc) -->
+                    </div>
+                </div>
+
+                <div class="table-container"
+                    style="overflow-x: auto; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <table class="data-table" id="excelTable" style="min-width: 1400px; font-size: 0.75rem;">
+                        <thead>
+                            <tr id="tableHeaders">
+                                <!-- Excel A-O Headers -->
                             </tr>
+                        </thead>
+                        <tbody id="excelBody">
+                            <!-- High density setup rows -->
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </main>
+    </div>
 
-                <div class="checklist-card">
-                    <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">Trend Grid (Institutional Bias)
-                    </h3>
-                    <div class="trend-grid" id="trendGrid">
-                        <!-- Loaded dynamically -->
-                    </div>
+    <!-- Analyst Drawer -->
+    <div id="analystDrawer" class="analyst-drawer">
+        <div class="drawer-header">
+            <div>
+                <h2 id="drawerSymbol" style="font-size: 1.75rem; font-weight: 900; margin: 0;">SYMBOL</h2>
+                <div id="drawerSector"
+                    style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 5px;">
+                    SECTOR</div>
+            </div>
+            <i class="fas fa-times" style="cursor: pointer; opacity: 0.4; font-size: 1.25rem;"
+                onclick="closeDrawer()"></i>
+        </div>
+
+        <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
+            <div style="margin-bottom: 2rem;">
+                <label
+                    style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 10px;">Macro/Investment
+                    Thesis</label>
+                <textarea id="drawerThesis"
+                    style="width: 100%; height: 250px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; padding: 1.25rem; font-size: 0.85rem; line-height: 1.6; border-radius: 4px; resize: none;"
+                    placeholder="What is the high-level reason for owning/watching this ticker? Why now?"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div>
+                    <label
+                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 10px;">Conviction
+                        Bias</label>
+                    <select id="drawerBias"
+                        style="width: 100%; background: var(--bg-dark); border: 1px solid var(--glass-border); color: #fff; padding: 8px; border-radius: 4px;">
+                        <option value="Bullish">Heavy Bull</option>
+                        <option value="Bullish_Bias">Bullish Bias</option>
+                        <option value="Neutral">Neutral</option>
+                        <option value="Bearish">Tactical Short</option>
+                    </select>
+                </div>
+                <div>
+                    <label
+                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 10px;">Tactical
+                        Bucket</label>
+                    <select id="drawerBucket"
+                        style="width: 100%; background: var(--bg-dark); border: 1px solid var(--glass-border); color: #fff; padding: 8px; border-radius: 4px;">
+                        <option value="Holdings">Long Term</option>
+                        <option value="3Swing">3Swing Swing</option>
+                        <option value="4POS">4POS Core</option>
+                        <option value="Options">Alpha Options</option>
+                    </select>
                 </div>
             </div>
 
-            <div id="strategyView">
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <label>Status</label>
-                        <select id="filterStatus" onchange="applyFilters()">
-                            <option value="all">All Statuses</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Sector</label>
-                        <select id="filterSector" onchange="applyFilters()">
-                            <option value="all">All Sectors</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Rating</label>
-                        <select id="filterRating" onchange="applyFilters()">
-                            <option value="all">All Ratings</option>
-                            <option value="5">5 Stars</option>
-                            <option value="4">4+ Stars</option>
-                            <option value="3">3+ Stars</option>
-                        </select>
-                    </div>
-                    <div style="margin-left: auto;">
-                        <button class="btn-primary" onclick="openSetupModal()"
-                            style="padding: 0.6rem 1.2rem; font-size: 0.8rem;">
-                            <i class="fas fa-plus"></i> New Setup
-                        </button>
-                    </div>
+            <div id="drawerTimeline">
+                <label
+                    style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 15px;">Historical
+                    Observations</label>
+                <div id="timelineList" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Timeline entries -->
                 </div>
+            </div>
+        </div>
 
-                <div id="stockGrid" class="stock-grid">
-                    <!-- Setups loaded here -->
-                    <div style="text-align: center; padding: 5rem; opacity: 0.5;">
-                        <i class="fas fa-circle-notch fa-spin"
-                            style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
-                        <p>Initializing Strat Radar...</p>
-                    </div>
-                </div>
+        <div style="padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--glass-border);">
+            <button class="btn-primary" style="width: 100%; padding: 12px; font-weight: 700;"
+                onclick="saveAnalystUpdate()">UPDATE SOVEREIGN ANALYSIS</button>
+        </div>
+    </div>
     </main>
     </div>
 
@@ -216,245 +349,268 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        let allStrategies = [];
-        let currentSetups = [];
-        let filteredSetups = [];
-        let currentPrices = {};
-        let activeStrategyId = null;
+        let activeWeek = null;
+        let activeStep = 1;
+        let mag7Tickers = ['AAPL', 'AMD', 'AMZN', 'AVGO', 'GOOGL', 'META', 'MSFT', 'NFLX', 'NVDA', 'TSLA'];
+        let macroIndices = ['SPY', 'QQQ', 'IWM', 'GOLD', 'VIX', 'BTC', 'ETHE', 'FXI'];
 
         async function init() {
-            try {
-                const resStrats = await axios.get('/api/strategies');
-                allStrategies = resStrats.data;
-                renderStrategies();
+            renderWeekGrid();
+            goToStep(1);
+        }
 
-                const resFilters = await axios.get('/api/filters');
-                populateFilters(resFilters.data);
-
-                if (allStrategies.length > 0) {
-                    loadStrategy(allStrategies[0].id, allStrategies[0].name);
-                }
-            } catch (err) {
-                console.error("Initialization failed:", err);
+        function renderWeekGrid() {
+            const grid = document.getElementById('weekGrid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 52; i++) {
+                const box = document.createElement('div');
+                box.className = 'week-box';
+                box.id = `week-${i}`;
+                box.innerText = i < 10 ? `CW0${i}` : `CW${i}`;
+                box.onclick = () => selectWeek(i);
+                grid.appendChild(box);
             }
         }
 
-        function populateFilters(data) {
-            const statusFilter = document.getElementById('filterStatus');
-            const sectorFilter = document.getElementById('filterSector');
-
-            data.statuses.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.innerText = s;
-                statusFilter.appendChild(opt);
-            });
-
-            data.sectors.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.innerText = s;
-                sectorFilter.appendChild(opt);
-            });
+        function selectWeek(week) {
+            activeWeek = week;
+            document.querySelectorAll('.week-box').forEach(el => el.classList.remove('selected'));
+            document.getElementById(`week-${week}`).classList.add('selected');
+            setTimeout(() => goToStep(2), 400);
         }
 
-        function renderStrategies() {
-            const list = document.getElementById('strategyList');
-            list.innerHTML = allStrategies.map(s => `
-                <div class="strat-item" id="strat-${s.id}" onclick="loadStrategy(${s.id}, '${s.name}')">
-                    <span>${s.name}</span>
-                    <i class="fas fa-chevron-right" style="font-size: 0.7rem; opacity: 0.5;"></i>
-                </div>
+        function goToStep(step) {
+            activeStep = step;
+            document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${step}Tab`).classList.add('active');
+
+            document.querySelectorAll('.wizard-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`step${step}`).classList.remove('hidden');
+
+            if (step === 2) loadStepData('catalyst');
+            if (step === 3) loadStepData('macro');
+            if (step === 4) loadStepData('focus');
+            if (step === 5) loadStrategyHub();
+        }
+
+        async function loadStepData(type) {
+            const body = document.getElementById(`${type}Body`);
+            body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; opacity: 0.5;">Syncing institutional specs for CW${activeWeek}...</td></tr>`;
+
+            try {
+                // In a real app, we'd fetch from /api/reviews?type=type&week=activeWeek
+                // For now, we seed with spec defaults if no data exists
+                let data = [];
+                if (type === 'catalyst') {
+                    data = [
+                        { slot: 'BM (Before Market)', m: '', t: '', w: '', th: '', f: '' },
+                        { slot: 'MH (Market Hours)', m: '', t: '', w: '', th: '', f: '' },
+                        { slot: 'AM (After Market)', m: '', t: '', w: '', th: '', f: '' }
+                    ];
+                    renderCatalystRows(data);
+                } else if (type === 'macro') {
+                    data = macroIndices.map(s => ({ ticker: s, trend: 'Neutral', notes: '', entry: '', exit: '', sl: '', tickers: '' }));
+                    renderMacroRows(data);
+                } else if (type === 'focus') {
+                    data = mag7Tickers.map(s => ({ stock: s, trend: 'Watch', entry: '', target: '', sl: '', comments: '' }));
+                    renderFocusRows(data);
+                }
+            } catch (err) {
+                console.error(`Load ${type} failed:`, err);
+            }
+        }
+
+        function renderCatalystRows(data) {
+            const body = document.getElementById('catalystBody');
+            body.innerHTML = data.map(r => `
+                <tr>
+                    <td><input type="text" value="${r.slot}" class="input-inline" style="font-weight: 700;"></td>
+                    <td><input type="text" value="${r.m}" class="input-inline"></td>
+                    <td><input type="text" value="${r.t}" class="input-inline"></td>
+                    <td><input type="text" value="${r.w}" class="input-inline"></td>
+                    <td><input type="text" value="${r.th}" class="input-inline"></td>
+                    <td><input type="text" value="${r.f}" class="input-inline"></td>
+                    <td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>
+                </tr>
             `).join('');
         }
 
-        async function loadStrategy(id, name) {
-            activeStrategyId = id;
-            document.querySelectorAll('.strat-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`strat-${id}`)?.classList.add('active');
+        function renderMacroRows(data) {
+            const body = document.getElementById('macroBody');
+            body.innerHTML = data.map(r => `
+                <tr>
+                    <td><input type="text" value="${r.ticker}" class="input-inline" style="font-weight: 800; color: var(--accent-primary);"></td>
+                    <td>
+                        <select class="input-inline" style="background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 4px;">
+                            <option ${r.trend.includes('Bull') ? 'selected' : ''}>Bullish</option>
+                            <option ${r.trend.includes('Cons') ? 'selected' : ''}>Consolidating</option>
+                            <option ${r.trend.includes('Bear') ? 'selected' : ''}>Bearish</option>
+                            <option ${r.trend.includes('Watch') ? 'selected' : ''}>Watch</option>
+                        </select>
+                    </td>
+                    <td><input type="text" value="${r.notes}" class="input-inline" placeholder="Trade plan..."></td>
+                    <td><input type="text" value="${r.entry}" class="input-inline"></td>
+                    <td><input type="text" value="${r.exit}" class="input-inline"></td>
+                    <td><input type="text" value="${r.sl}" class="input-inline"></td>
+                    <td><input type="text" value="${r.tickers}" class="input-inline"></td>
+                    <td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>
+                </tr>
+            `).join('');
+        }
 
-            document.getElementById('currentStratName').innerHTML = `${name.split(' ')[0]} <span class="accent-text">${name.split(' ').slice(1).join(' ')}</span>`;
-
-            try {
-                const res = await axios.get(`/api/setups?strategy_id=${id}`);
-                currentSetups = res.data;
-                applyFilters();
-                syncPrices();
-            } catch (err) {
-                console.error("Failed to load setups:", err);
+        function renderFocusRows(data) {
+            const body = document.getElementById('focusBody');
+            body.innerHTML = data.map(r => `
+                <tr>
+                    <td><input type="text" value="${r.stock}" class="input-inline" style="font-weight: 800;"></td>
+                    <td>
+                        <select class="input-inline" style="background: var(--bg-dark); border: 1px solid var(--glass-border); border-radius: 4px;">
+                            <option ${r.trend === 'Watch' ? 'selected' : ''}>Watch</option>
+                            <option ${r.trend === 'Bullish' ? 'selected' : ''}>Bullish</option>
+                            <option ${r.trend === 'Bearish' ? 'selected' : ''}>Bearish</option>
+                            <option ${r.trend === 'Cons' ? 'selected' : ''}>Cons</option>
+                        </select>
+                    </td>
+                    <td><input type="text" value="${r.entry}" class="input-inline"></td>
+                    <td><input type="text" value="${r.target}" class="input-inline"></td>
+                    <td><input type="text" value="${r.sl}" class="input-inline"></td>
+                    <td><input type="text" value="${r.comments}" class="input-inline" placeholder="Technical levels & options..."></td>
+                    <td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>
+                </tr>
+            `).join('');
+            function addTableRow(id) {
+                const body = document.getElementById(id);
+                const tr = document.createElement('tr');
+                if (id === 'catalystBody') {
+                    tr.innerHTML = `<td><input type="text" placeholder="Slot" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
+                } else if (id === 'macroBody') {
+                    tr.innerHTML = `<td><input type="text" placeholder="Ticker" class="input-inline"></td><td><select class="input-inline"><option>Bullish</option><option>Bearish</option><option>Neutral</option><option>Watch</option></select></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
+                } else if (id === 'focusBody') {
+                    tr.innerHTML = `<td><input type="text" placeholder="Stock" class="input-inline"></td><td><select class="input-inline"><option>Watch</option><option>Bullish</option><option>Bearish</option><option>Cons</option></select></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
+                }
+                body.appendChild(tr);
             }
-        }
 
-        function applyFilters() {
-            const status = document.getElementById('filterStatus').value;
-            const sector = document.getElementById('filterSector').value;
-            const rating = document.getElementById('filterRating').value;
-
-            filteredSetups = currentSetups.filter(s => {
-                const matchStatus = status === 'all' || s.status === status;
-                const matchSector = sector === 'all' || s.sector === sector;
-                const matchRating = rating === 'all' || parseFloat(s.rating) >= parseFloat(rating);
-                return matchStatus && matchSector && matchRating;
-            });
-
-            renderSetups();
-        }
-
-        async function syncPrices() {
-            const symbols = [...new Set(currentSetups.map(s => s.symbol))];
-            if (symbols.length === 0) return;
-
-            try {
-                const res = await axios.post('/api/prices', { symbols });
-                currentPrices = res.data;
-                updatePricesInUI();
-            } catch (err) {
-                console.error("Price sync failed:", err);
-            }
-        }
-
-        function updatePricesInUI() {
-            Object.entries(currentPrices).forEach(([symbol, price]) => {
-                const elements = document.querySelectorAll(`.price-${symbol}`);
-                elements.forEach(el => {
-                    el.innerText = price !== "N/A" ? `$${price}` : "N/A";
+            async function saveWizardStep(type) {
+                const body = document.getElementById(`${type}Body`);
+                const rows = Array.from(body.querySelectorAll('tr')).map(tr => {
+                    const inputs = tr.querySelectorAll('input, select');
+                    if (type === 'catalyst') {
+                        return { slot: inputs[0].value, m: inputs[1].value, t: inputs[2].value, w: inputs[3].value, th: inputs[4].value, f: inputs[5].value };
+                    } else if (type === 'macro') {
+                        return { ticker: inputs[0].value, trend: inputs[1].value, notes: inputs[2].value, entry: inputs[3].value, exit: inputs[4].value, sl: inputs[5].value, tickers: inputs[6].value };
+                    } else if (type === 'focus') {
+                        return { stock: inputs[0].value, trend: inputs[1].value, entry: inputs[2].value, target: inputs[3].value, sl: inputs[4].value, comments: inputs[5].value };
+                    }
                 });
-            });
-        }
 
-        function renderSetups() {
-            const grid = document.getElementById('stockGrid');
-            if (filteredSetups.length === 0) {
-                grid.innerHTML = '<div style="text-align:center; padding: 5rem;"><p>No setups matching these filters.</p></div>';
-                return;
+                try {
+                    await axios.post('/api/wizard/save', { type, week_number: activeWeek, rows });
+                    alert(`${type.toUpperCase()} saved successfully for CW${activeWeek}!`);
+                } catch (err) {
+                    console.error("Save Error:", err);
+                    alert("Failed to save data. Check console.");
+                }
             }
 
-            grid.innerHTML = filteredSetups.map((s, idx) => {
-                const statusClass = `status-${s.status.toLowerCase()}`;
-                const ratingStars = '★'.repeat(Math.round(parseFloat(s.rating) || 0)) + '☆'.repeat(5 - Math.round(parseFloat(s.rating) || 0));
+            async function loadMag7() {
+                const grid = document.getElementById('mag7Grid');
+                if (!grid) return; // Grid might be removed in new spec
+                grid.innerHTML = '<div style="opacity: 0.5; padding: 2rem;">Loading Mag 7 Performance...</div>';
 
-                return `
-                    <div class="stock-card animate-fade" style="animation-delay: ${idx * 0.05}s">
-                        <div class="card-header">
-                            <div class="symbol-group">
-                                <span class="symbol">${s.symbol}</span>
-                                <span class="sector">${s.sector || "General"}</span>
-                            </div>
-                            <div class="price-group">
-                                <div class="price price-${s.symbol}">${currentPrices[s.symbol] ? '$' + currentPrices[s.symbol] : 'Loading...'}</div>
-                                <span class="status-badge ${statusClass}">${s.status}</span>
-                            </div>
-                        </div>
+                try {
+                    const res = await axios.post('/api/prices', { symbols: mag7Tickers });
+                    const prices = res.data;
 
-                        <div class="metrics">
-                            <div class="metric-item">
-                                <span class="metric-label">Entry</span>
-                                <span class="metric-value">${s.entry || '-'}</span>
-                            </div>
-                            <div class="metric-item">
-                                <span class="metric-label">Target</span>
-                                <span class="metric-value" style="color: var(--success)">${s.target || '-'}</span>
-                            </div>
-                            <div class="metric-item">
-                                <span class="metric-label">Rating</span>
-                                <div class="rating">${ratingStars}</div>
-                            </div>
-                            <div class="metric-item">
-                                <span class="metric-label">Setup Date</span>
-                                <span class="metric-value">${s.date.split(' ')[0]}</span>
-                            </div>
+                    grid.innerHTML = mag7Tickers.map(symbol => `
+                    <div class="checklist-card" style="background: var(--card-bg); padding: 1.5rem; border: 1px solid var(--glass-border); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 900;">${symbol}</h3>
+                            <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-primary);">$${prices[symbol] || 'N.A'}</div>
                         </div>
-
-                        <div class="comments">
-                            <div style="font-weight: 700; font-size: 0.7rem; text-transform: uppercase; color: var(--accent-primary); margin-bottom: 0.5rem;">
-                                Strategy Notes
-                            </div>
-                            ${s.comments || "No comments captured for this setup."}
+                        <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                            <button class="btn-secondary" style="flex: 1; font-size: 0.65rem; padding: 6px;">BULLISH</button>
+                            <button class="btn-secondary" style="flex: 1; font-size: 0.65rem; padding: 6px;">BEARISH</button>
                         </div>
-
-                        <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-                            <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="viewHistory('${s.symbol}')">
-                                <i class="fas fa-history"></i> Timeline
-                            </button>
-                            <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="editSetup(${s.id})">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                        </div>
+                        <textarea placeholder="Tactical technical thesis..." style="width: 100%; height: 80px; background: var(--bg-dark); border: 1px solid var(--glass-border); color: #fff; padding: 10px; font-size: 0.8rem; border-radius: 4px; resize: none;"></textarea>
                     </div>
-                `;
-            }).join('');
-        }
-
-        function openSetupModal(setup = null) {
-            const modal = document.getElementById('setupModal');
-            const form = document.getElementById('setupForm');
-            modal.classList.remove('hidden');
-
-            if (setup) {
-                document.getElementById('modalTitle').innerText = `Edit ${setup.symbol}`;
-                document.getElementById('setupId').value = setup.id;
-                document.getElementById('setupSymbol').value = setup.symbol;
-                document.getElementById('setupSymbol').disabled = true;
-                document.getElementById('setupStatus').value = setup.status;
-                document.getElementById('setupRating').value = setup.rating;
-                document.getElementById('setupEntry').value = setup.entry;
-                document.getElementById('setupTarget').value = setup.target;
-                document.getElementById('setupSL').value = setup.sl;
-                document.getElementById('setupComments').value = setup.comments;
-            } else {
-                document.getElementById('modalTitle').innerText = "Add Setup";
-                form.reset();
-                document.getElementById('setupId').value = "";
-                document.getElementById('setupSymbol').disabled = false;
+                `).join('');
+                } catch (err) {
+                    console.error("Mag 7 Error:", err);
+                }
             }
-        }
 
-        function closeSetupModal() {
-            document.getElementById('setupModal').classList.add('hidden');
-        }
+            async function loadStrategyHub() {
+                const tabsContainer = document.getElementById('strategyTabs');
+                try {
+                    const res = await axios.get('/api/strategies');
+                    const strats = res.data;
+                    tabsContainer.innerHTML = strats.map((s, idx) => `
+                    <div class="strategy-tab ${idx === 0 ? 'active' : ''}" 
+                         style="padding: 10px 20px; background: ${idx === 0 ? 'var(--accent-primary)' : 'var(--card-bg)'}; border-radius: 20px; cursor: pointer; font-size: 0.75rem; border: 1px solid var(--glass-border);"
+                         onclick="switchStrat(this, ${s.id})">
+                        ${s.name}
+                    </div>
+                `).join('');
 
-        function editSetup(id) {
-            const setup = currentSetups.find(s => s.id === id);
-            if (setup) openSetupModal(setup);
-        }
-
-        async function saveSetup(event) {
-            event.preventDefault();
-            const data = {
-                id: document.getElementById('setupId').value,
-                symbol: document.getElementById('setupSymbol').value,
-                strategy_id: activeStrategyId,
-                status: document.getElementById('setupStatus').value,
-                rating: document.getElementById('setupRating').value,
-                entry: document.getElementById('setupEntry').value,
-                target: document.getElementById('setupTarget').value,
-                sl: document.getElementById('setupSL').value,
-                comments: document.getElementById('setupComments').value,
-                score: document.getElementById('setupRating').value // Use rating as score for now
-            };
-
-            try {
-                await axios.post('/api/setups', data);
-                closeSetupModal();
-                loadStrategy(activeStrategyId, document.querySelector('.strat-item.active span').innerText);
-            } catch (err) {
-                alert("Failed to save setup: " + err.message);
+                    renderExcelHeaders();
+                    if (strats.length > 0) loadStrategyTable(strats[0].id);
+                } catch (err) {
+                    console.error("Strat Hub Error:", err);
+                }
             }
-        }
 
-        async function viewHistory(symbol) {
-            try {
-                const res = await axios.get(`/api/ticker/${symbol}/history`);
-                const history = res.data;
-                alert(`History for ${symbol}:\n\n` + history.map(h => `${h.date}: ${h.status} (${h.strategy_name})`).join('\n'));
-            } catch (err) {
-                console.error("History fetch failed:", err);
+            function switchStrat(el, id) {
+                document.querySelectorAll('.strategy-tab').forEach(t => {
+                    t.style.background = 'var(--card-bg)';
+                    t.classList.remove('active');
+                });
+                el.style.background = 'var(--accent-primary)';
+                el.classList.add('active');
+                loadStrategyTable(id);
             }
-        }
 
-        init();
+            function renderExcelHeaders() {
+                const head = document.getElementById('tableHeaders');
+                const cols = ['ChatGPT', 'Strategy', 'BUY Date', 'Stock', 'Category', 'Pattern Stage', 'Score', 'Highlights', 'Breakout Zone', 'Target Zone', 'Invalidation', 'Sector', 'Horizon', 'Confidence', 'Buy / Wait'];
+                head.innerHTML = cols.map(c => `<th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">${c}</th>`).join('');
+            }
+
+            async function loadStrategyTable(stratId) {
+                const body = document.getElementById('excelBody');
+                body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Syncing with Analyst Database...</td></tr>';
+
+                try {
+                    const res = await axios.get(`/api/setups?strategy_id=${stratId}`);
+                    const setups = res.data;
+
+                    body.innerHTML = setups.map(s => `
+                    <tr>
+                        <td style="opacity: 0.5;">${s.source || 'Analyst'}</td>
+                        <td style="font-weight: 500;">${s.strategy_name || 'N/A'}</td>
+                        <td style="color: var(--accent-primary);">${s.buy_date || '-'}</td>
+                        <td style="font-weight: 800; color: #fff; font-size: 0.9rem;">${s.symbol}</td>
+                        <td style="color: var(--warning);">${s.category || '-'}</td>
+                        <td><span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 3px;">${s.pattern_stage || '-'}</span></td>
+                        <td style="font-weight: 700;">${s.score_text || '-'}</td>
+                        <td style="font-size: 0.7rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.highlights || '-'}</td>
+                        <td>${s.breakout_zone || '-'}</td>
+                        <td style="color: var(--success); font-weight: 600;">${s.target_zone || '-'}</td>
+                        <td style="color: var(--danger);">${s.invalidation || '-'}</td>
+                        <td style="text-transform: uppercase; font-size: 0.65rem; opacity: 0.7;">${s.sector || '-'}</td>
+                        <td>${s.horizon || '-'}</td>
+                        <td style="color: var(--warning);">${'★'.repeat(s.confidence_stars || 0)}</td>
+                        <td><span class="state-badge ${s.buy_wait_status === 'Buy' ? 'state-triggered' : 'state-monitoring'}">${s.buy_wait_status || 'Wait'}</span></td>
+                    </tr>
+                `).join('');
+                } catch (err) {
+                    console.error("Table Load Error:", err);
+                }
+            }
+
+            init();
+    </script>
     </script>
 </body>
 

@@ -63,23 +63,79 @@ def get_tickers():
 @app.route('/api/setups', methods=['GET'])
 def get_setups():
     strategy_id = request.args.get('strategy_id')
+    bucket = request.args.get('bucket')
+    attention_only = request.args.get('attention', 'false').lower() == 'true'
+    
     conn = get_db_connection()
     cur = get_db_cursor(conn)
+    
     query = """
-        SELECT s.*, t.symbol, t.sector, st.name as strategy_name
+        SELECT s.*, t.symbol, t.sector, t.thesis, t.bias, st.name as strategy_name
         FROM setups s
         JOIN tickers t ON s.ticker_id = t.id
         JOIN strategies st ON s.strategy_id = st.id
     """
+    params = []
+    where_clauses = []
+    
     if strategy_id:
-        p = "%s" if DATABASE_URL else "?"
-        query += f" WHERE s.strategy_id = {p}"
-        cur.execute(query, (strategy_id,))
-    else:
-        cur.execute(query)
+        where_clauses.append("s.strategy_id = %s" if DATABASE_URL else "s.strategy_id = ?")
+        params.append(strategy_id)
+    
+    if bucket:
+        where_clauses.append("s.bucket = %s" if DATABASE_URL else "s.bucket = ?")
+        params.append(bucket)
+        
+    if where_clauses:
+        query += " WHERE " + " AND ".join(where_clauses)
+    
+    cur.execute(query, params)
     setups = cur.fetchall()
     conn.close()
-    return jsonify([dict(s) for s in setups])
+    
+    # Process attention logic (mocking price triggers for now as we don't have a real-time stream here yet)
+    # In a real app, we'd compare price to trigger_price/invalid_price
+    results = [dict(s) for s in setups]
+    if attention_only:
+        # Filter for 'MONITORING' with specific conditions or just 'STALE'
+        # For demo, let's say anything older than 7 days needs attention
+        from datetime import timedelta
+        cutoff = datetime.now() - timedelta(days=7)
+        results = [s for s in results if s['state'] != 'ACTIVE' or datetime.strptime(s['date'], '%Y-%m-%d') < cutoff]
+        
+    return jsonify(results)
+
+@app.route('/api/tickers/<symbol>', methods=['POST'])
+def update_ticker(symbol):
+    data = request.json
+    conn = get_db_connection()
+    cur = get_db_cursor(conn)
+    p = "%s" if DATABASE_URL else "?"
+    try:
+        cur.execute(f"UPDATE tickers SET thesis = {p}, bias = {p} WHERE symbol = {p}",
+                   (data.get('thesis'), data.get('bias'), symbol))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/market/regime', methods=['GET', 'POST'])
+def market_regime():
+    conn = get_db_connection()
+    cur = get_db_cursor(conn)
+    if request.method == 'POST':
+        data = request.json
+        p = "%s" if DATABASE_URL else "?"
+        cur.execute(f"INSERT INTO market_snapshots (date, regime, notes) VALUES ({p}, {p}, {p})",
+                   (datetime.now().strftime('%Y-%m-%d'), data['regime'], data.get('notes', '')))
+        conn.commit()
+    
+    cur.execute('SELECT * FROM market_snapshots ORDER BY date DESC LIMIT 1')
+    regime = cur.fetchone()
+    conn.close()
+    return jsonify(dict(regime) if regime else {"regime": "Neutral", "notes": "No snapshot taken."})
 
 @app.route('/api/setups', methods=['POST'])
 def save_setup():
@@ -137,29 +193,58 @@ def get_filters():
 
 @app.route('/api/catalysts', methods=['GET'])
 def get_catalysts():
-    week = request.args.get('week', datetime.now().strftime('%Y-%W'))
+    week = request.args.get('week_number')
     conn = get_db_connection()
     cur = get_db_cursor(conn)
     p = "%s" if DATABASE_URL else "?"
-    cur.execute(f'SELECT * FROM catalysts WHERE week_start = {p}', (week,))
+    if week:
+        cur.execute(f'SELECT * FROM catalysts WHERE week_number = {p}', (week,))
+    else:
+        cur.execute('SELECT * FROM catalysts')
     items = cur.fetchall()
     conn.close()
     return jsonify([dict(i) for i in items])
 
-@app.route('/api/catalysts', methods=['POST'])
-def save_catalyst():
+@app.route('/api/wizard/save', methods=['POST'])
+def save_wizard_step():
     data = request.json
+    step_type = data.get('type') # catalyst, macro, focus
+    week = data.get('week_number')
+    rows = data.get('rows', [])
+    
     conn = get_db_connection()
     cur = get_db_cursor(conn)
     p = "%s" if DATABASE_URL else "?"
+    
     try:
-        cur.execute(f"""
-            INSERT INTO catalysts (week_start, day, time_slot, event)
-            VALUES ({p}, {p}, {p}, {p})
-        """, (data['week'], data['day'], data['time_slot'], data['event']))
+        if step_type == 'catalyst':
+            cur.execute(f"DELETE FROM catalysts WHERE week_number = {p}", (week,))
+            for r in rows:
+                cur.execute(f"""
+                    INSERT INTO catalysts (week_number, week_start, day, time_slot, event)
+                    VALUES ({p}, {p}, {p}, {p}, {p})
+                """, (week, 'CW'+str(week), r.get('day', ''), r.get('time_slot', ''), r.get('event', '')))
+        
+        elif step_type == 'macro':
+            cur.execute(f"DELETE FROM macro_reviews WHERE week_number = {p}", (week,))
+            for r in rows:
+                cur.execute(f"""
+                    INSERT INTO macro_reviews (week_number, ticker, trend_labels, trade_notes, entry, exit_val, sl)
+                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p})
+                """, (week, r['ticker'], r['trend'], r['notes'], r['entry'], r['exit'], r['sl']))
+        
+        elif step_type == 'focus':
+            cur.execute(f"DELETE FROM focus_reviews WHERE week_number = {p}", (week,))
+            for r in rows:
+                cur.execute(f"""
+                    INSERT INTO focus_reviews (week_number, ticker, trend, entry, target, sl, comments)
+                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p})
+                """, (week, r['stock'], r['trend'], r['entry'], r['target'], r['sl'], r['comments']))
+        
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
+        print(f"Save Wizard Error: {e}")
         return jsonify({"error": str(e)}), 400
     finally:
         conn.close()

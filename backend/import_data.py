@@ -42,43 +42,79 @@ def import_sheet(conn, sheet_name, strategy_name):
     print(f"Importing {sheet_name} as {strategy_name}...")
     try:
         df = pd.read_excel(EXCEL_PATH, sheet_name=sheet_name)
-        # Identify common columns
-        # Each sheet has different columns, so we map them
+        
+        # Cleanup column names (remove leading/trailing spaces)
+        df.columns = [str(c).strip() for c in df.columns]
         
         strategy_id = get_or_create_strategy(conn, strategy_name)
         
         for _, row in df.iterrows():
-            # Basic ticker extraction - looking for 'Ticker' or 'Stock'
-            symbol = str(row.get('Ticker', row.get('Stock', ''))).strip()
+            # Column D: Stock / Ticker
+            symbol = str(row.get('Stock', row.get('Ticker', ''))).strip()
             if not symbol or symbol == 'nan' or len(symbol) > 10:
                 continue
             
-            ticker_id = get_or_create_ticker(conn, symbol)
+            # Column L & M: Sector & Horizon
+            sector = str(row.get('Sector', '')).strip()
+            horizon = str(row.get('Horizon', '')).strip()
             
-            # Extract common fields
-            date_val = row.get('Date', datetime.now().strftime('%Y-%m-%d'))
-            if pd.isna(date_val): date_val = datetime.now().strftime('%Y-%m-%d')
+            ticker_id = get_or_create_ticker(conn, symbol, sector, horizon)
             
-            status = str(row.get('decision', row.get('Signal', 'Wait'))).strip()
-            rating = str(row.get('Rating', row.get('Setup Rating', '')))
-            score = row.get('Score (5)', row.get('Total score for 5', None))
-            entry = str(row.get('Entry', ''))
-            target = str(row.get('Target', ''))
-            sl = str(row.get('SL', ''))
-            rr = str(row.get('RR', ''))
-            comments = str(row.get('Comments', row.get('Notes', row.get('Commetns/ Key Takeaways', ''))))
+            # Column A: ChatGPT (Source)
+            source = str(row.get('ChatGPT', 'Analyst')).strip()
             
-            # Store all other info in meta
-            meta = {k: str(v) for k, v in row.items() if k not in ['Ticker', 'Stock', 'Date']}
+            # Column B: Strategy
+            strat_field = str(row.get('Strategy', strategy_name)).strip()
             
+            # Column C: BUY Date
+            buy_date = row.get('BUY Date', row.get('Date', ''))
+            if pd.isna(buy_date): buy_date = ''
+            
+            # Column E: Category
+            category = str(row.get('Category', '')).strip()
+            
+            # Column F: Pattern Stage
+            pattern_stage = str(row.get('Pattern Stage', '')).strip()
+            
+            # Column G: Score
+            score_text = str(row.get('Score', '')).strip()
+            
+            # Column H: Highlights
+            highlights = str(row.get('Highlights', '')).strip()
+            
+            # Column I, J, K: Price Zones
+            breakout_zone = str(row.get('Breakout Zone', '')).strip()
+            target_zone = str(row.get('Target Zone', '')).strip()
+            invalidation = str(row.get('Invalidation', '')).strip()
+            
+            # Column N: Confidence (Count stars if possible, else use raw value)
+            conf_val = row.get('Confidence', 3)
+            try:
+                if isinstance(conf_val, str):
+                    confidence_stars = conf_val.count('★') if '★' in conf_val else 3
+                else:
+                    confidence_stars = int(conf_val) if not pd.isna(conf_val) else 3
+            except:
+                confidence_stars = 3
+
+            # Column O: Buy / Wait
+            buy_wait = str(row.get('Buy / Wait', 'Wait')).strip()
+
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO setups 
-                (ticker_id, strategy_id, date, status, rating, score, entry, target, sl, rr, comments, meta_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (ticker_id, strategy_id, str(date_val), status, rating, score, entry, target, sl, rr, comments, json.dumps(meta)))
+                (ticker_id, strategy_id, date, source, strategy_name, buy_date, category, 
+                 pattern_stage, score_text, highlights, breakout_zone, target_zone, 
+                 invalidation, sector, horizon, confidence_stars, buy_wait_status, state)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (ticker_id, strategy_id, datetime.now().strftime('%Y-%m-%d'), 
+                   source, strat_field, str(buy_date), category, pattern_stage, 
+                   score_text, highlights, breakout_zone, target_zone, invalidation, 
+                   sector, horizon, confidence_stars, buy_wait, 'ACTIVE'))
         
         conn.commit()
+    except Exception as e:
+        print(f"Error importing {sheet_name}: {e}")
     except Exception as e:
         print(f"Error importing {sheet_name}: {e}")
 
