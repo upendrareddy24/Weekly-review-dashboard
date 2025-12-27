@@ -362,7 +362,8 @@
             body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; opacity: 0.5;">Syncing institutional specs for CW${activeWeek}...</td></tr>`;
 
             try {
-                const res = await axios.get(`/api/${type}_reviews?week_number=${activeWeek}`);
+                const endpoint = type === 'catalyst' ? `/api/catalysts?week_number=${activeWeek}` : `/api/${type}_reviews?week_number=${activeWeek}`;
+                const res = await axios.get(endpoint);
                 const data = res.data;
 
                 if (type === 'catalyst') {

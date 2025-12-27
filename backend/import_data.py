@@ -38,8 +38,8 @@ def get_or_create_strategy(conn, name):
     conn.commit()
     return cursor.lastrowid
 
-def import_sheet(conn, sheet_name, strategy_name):
-    print(f"Importing {sheet_name} as {strategy_name}...")
+def import_sheet(conn, sheet_name, strategy_name, bucket_name):
+    print(f"Importing {sheet_name} as {strategy_name} into {bucket_name}...")
     try:
         df = pd.read_excel(EXCEL_PATH, sheet_name=sheet_name)
         
@@ -87,7 +87,7 @@ def import_sheet(conn, sheet_name, strategy_name):
             target_zone = str(row.get('Target Zone', '')).strip()
             invalidation = str(row.get('Invalidation', '')).strip()
             
-            # Column N: Confidence (Count stars if possible, else use raw value)
+            # Column N: Confidence
             conf_val = row.get('Confidence', 3)
             try:
                 if isinstance(conf_val, str):
@@ -105,35 +105,33 @@ def import_sheet(conn, sheet_name, strategy_name):
                 INSERT INTO setups 
                 (ticker_id, strategy_id, date, source, strategy_name, buy_date, category, 
                  pattern_stage, score_text, highlights, breakout_zone, target_zone, 
-                 invalidation, horizon, confidence_stars, buy_wait_status, state)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 invalidation, horizon, confidence_stars, buy_wait_status, state, bucket)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (ticker_id, strategy_id, datetime.now().strftime('%Y-%m-%d'), 
                    source, strat_field, str(buy_date), category, pattern_stage, 
                    score_text, highlights, breakout_zone, target_zone, invalidation, 
-                   horizon, confidence_stars, buy_wait, 'ACTIVE'))
+                   horizon, confidence_stars, buy_wait, 'ACTIVE', bucket_name))
         
         conn.commit()
         print(f"Successfully imported {len(df)} rows from {sheet_name}.")
     except Exception as e:
         print(f"Error importing {sheet_name}: {e}")
-    except Exception as e:
-        print(f"Error importing {sheet_name}: {e}")
 
 if __name__ == "__main__":
-    init_db()
+    init_db() # This will re-create tables if we want a fresh start, or just run it to ensure schema
     conn = sqlite3.connect(DB_PATH)
     
-    # Define which sheets to import and their strategy names
-    sheets_to_import = {
-        '3Swing-HK': 'Weekly Breakout (3S)',
-        '4POS-BO-HK': 'Positional Breakout (4P)',
-        '1 week swings': 'Weekly Swings',
-        'EMA Cons': 'EMA Consolidation',
-        'BO_Trades': 'Breakout Trades'
-    }
+    # Define which sheets to import and their strategy/bucket names
+    sheets_to_import = [
+        ('3Swing-HK', 'Weekly Breakout (3S)', '3Swing'),
+        ('4POS-BO-HK', 'Positional Breakout (4P)', '4POS'),
+        ('1 week swings', 'Weekly Swings', 'Holdings'),
+        ('EMA Cons', 'EMA Consolidation', '3Swing'),
+        ('BO_Trades', 'Breakout Trades', '3Swing')
+    ]
     
-    for sheet, strat in sheets_to_import.items():
-        import_sheet(conn, sheet, strat)
+    for sheet, strat, bucket in sheets_to_import:
+        import_sheet(conn, sheet, strat, bucket)
         
     conn.close()
     print("Migration complete.")

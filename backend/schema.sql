@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS setups (
     horizon TEXT,             -- Column M: Horizon
     confidence_stars INTEGER, -- Column N: Confidence (1-5)
     buy_wait_status TEXT,     -- Column O: Buy / Wait
+    bucket TEXT,              -- Tactical Bucket Mapping
     state TEXT DEFAULT 'MONITORING', -- Tactical application state
     entry REAL,
     target REAL,
