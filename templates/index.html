@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body>
@@ -81,9 +82,9 @@
                 <div class="wizard-step" id="step4Tab" onclick="goToStep(4)">4. Mag 7 Review</div>
                 <div class="wizard-step" id="step5Tab" onclick="goToStep(5)">5. Strategy Hub</div>
                 <div style="margin-left: auto; display: flex; gap: 10px;">
-                    <button class="btn-secondary" onclick="exportReport('active')"
+                    <button class="btn-secondary" onclick="exportReport('active')" id="exportActiveBtn"
                         style="font-size: 0.75rem; background: var(--card-bg); border: 1px solid var(--accent-primary);">
-                        <i class="fas fa-file-pdf"></i> Export CW${activeWeek}
+                        <i class="fas fa-file-pdf"></i> Export CW--
                     </button>
                     <button class="btn-secondary" onclick="exportReport('all')"
                         style="font-size: 0.75rem; background: var(--card-bg); border: 1px solid var(--accent-primary);">
@@ -368,6 +369,19 @@
         async function init() {
             renderWeekGrid();
             goToStep(1);
+            loadMarketRegime();
+        }
+
+        async function loadMarketRegime() {
+            try {
+                const res = await axios.get('/api/market/regime');
+                const banner = document.getElementById('marketRegime');
+                const notes = document.getElementById('regimeNotes');
+                banner.innerText = res.data.regime || 'Neutral';
+                notes.innerText = res.data.notes || '';
+            } catch (err) {
+                console.error("Regime Load Error:", err);
+            }
         }
 
         function renderWeekGrid() {
@@ -387,6 +401,14 @@
             activeWeek = week;
             document.querySelectorAll('.week-box').forEach(el => el.classList.remove('selected'));
             document.getElementById(`week-${week}`).classList.add('selected');
+
+            // Update Export Button Text
+            const exportBtn = document.getElementById('exportActiveBtn');
+            if (exportBtn) {
+                const weekStr = week < 10 ? `0${week}` : week;
+                exportBtn.innerHTML = `<i class="fas fa-file-pdf"></i> Export CW${weekStr}`;
+            }
+
             setTimeout(() => goToStep(2), 400);
         }
 
@@ -489,39 +511,40 @@
                     <td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>
                 </tr>
             `).join('');
-            function addTableRow(id) {
-                const body = document.getElementById(id);
-                const tr = document.createElement('tr');
-                if (id === 'catalystBody') {
-                    tr.innerHTML = `<td><input type="text" placeholder="Slot" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
-                } else if (id === 'macroBody') {
-                    tr.innerHTML = `<td><input type="text" placeholder="Ticker" class="input-inline"></td><td><select class="input-inline"><option>Bullish</option><option>Bearish</option><option>Neutral</option><option>Watch</option></select></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
-                } else if (id === 'focusBody') {
-                    tr.innerHTML = `<td><input type="text" placeholder="Stock" class="input-inline"></td><td><select class="input-inline"><option>Watch</option><option>Bullish</option><option>Bearish</option><option>Cons</option></select></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
-                }
-                body.appendChild(tr);
+        }
+
+        function addTableRow(id) {
+            const body = document.getElementById(id);
+            const tr = document.createElement('tr');
+            if (id === 'catalystBody') {
+                tr.innerHTML = `<td><input type="text" placeholder="Slot" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
+            } else if (id === 'macroBody') {
+                tr.innerHTML = `<td><input type="text" placeholder="Ticker" class="input-inline"></td><td><select class="input-inline"><option>Bullish</option><option>Bearish</option><option>Neutral</option><option>Watch</option></select></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
+            } else if (id === 'focusBody') {
+                tr.innerHTML = `<td><input type="text" placeholder="Stock" class="input-inline"></td><td><select class="input-inline"><option>Watch</option><option>Bullish</option><option>Bearish</option><option>Cons</option></select></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
             }
+            body.appendChild(tr);
+        }
 
-            async function saveWizardStep(type) {
-                const body = document.getElementById(`${type}Body`);
-                const rows = Array.from(body.querySelectorAll('tr')).map(tr => {
-                    const inputs = tr.querySelectorAll('input, select');
-                    if (type === 'catalyst') {
-                        return { slot: inputs[0].value, m: inputs[1].value, t: inputs[2].value, w: inputs[3].value, th: inputs[4].value, f: inputs[5].value };
-                    } else if (type === 'macro') {
-                        return { ticker: inputs[0].value, trend: inputs[1].value, notes: inputs[2].value, entry: inputs[3].value, exit: inputs[4].value, sl: inputs[5].value, tickers: inputs[6].value };
-                    } else if (type === 'focus') {
-                        return { stock: inputs[0].value, trend: inputs[1].value, entry: inputs[2].value, target: inputs[3].value, sl: inputs[4].value, comments: inputs[5].value };
-                    }
-                });
-
-                try {
-                    await axios.post('/api/wizard/save', { type, week_number: activeWeek, rows });
-                    alert(`${type.toUpperCase()} saved successfully for CW${activeWeek}!`);
-                } catch (err) {
-                    console.error("Save Error:", err);
-                    alert("Failed to save data. Check console.");
+        async function saveWizardStep(type) {
+            const body = document.getElementById(`${type}Body`);
+            const rows = Array.from(body.querySelectorAll('tr')).map(tr => {
+                const inputs = tr.querySelectorAll('input, select');
+                if (type === 'catalyst') {
+                    return { slot: inputs[0].value, m: inputs[1].value, t: inputs[2].value, w: inputs[3].value, th: inputs[4].value, f: inputs[5].value };
+                } else if (type === 'macro') {
+                    return { ticker: inputs[0].value, trend: inputs[1].value, notes: inputs[2].value, entry: inputs[3].value, exit: inputs[4].value, sl: inputs[5].value, tickers: inputs[6].value };
+                } else if (type === 'focus') {
+                    return { stock: inputs[0].value, trend: inputs[1].value, entry: inputs[2].value, target: inputs[3].value, sl: inputs[4].value, comments: inputs[5].value };
                 }
+            });
+
+            try {
+                await axios.post('/api/wizard/save', { type, week_number: activeWeek, rows });
+                alert(`${type.toUpperCase()} saved successfully for CW${activeWeek}!`);
+            } catch (err) {
+                console.error("Save Error:", err);
+                alert("Failed to save data. Check console.");
             }
         }
 
@@ -622,7 +645,7 @@
                         <td style="color: var(--danger);">${s.invalidation || '-'}</td>
                         <td style="text-transform: uppercase; font-size: 0.65rem; opacity: 0.7;">${s.sector || '-'}</td>
                         <td>${s.horizon || '-'}</td>
-                        <td style="color: var(--warning);">${'★'.repeat(s.confidence_stars || 0)}</td>
+                        <td style="color: var(--warning);">${s.confidence_stars ? '★'.repeat(s.confidence_stars) : '-'}</td>
                         <td><span class="state-badge ${s.buy_wait_status === 'Buy' ? 'state-triggered' : 'state-monitoring'}">${s.buy_wait_status || 'Wait'}</span></td>
                     </tr>
                 `).join('');
