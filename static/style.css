@@ -211,35 +211,6 @@ aside {
     color: #fff;
 }
 
-/* In-line Analyst Drawer */
-.analyst-drawer {
-    position: fixed;
-    right: -400px;
-    top: 0;
-    width: 400px;
-    height: 100vh;
-    background: var(--card-bg);
-    border-left: 1px solid var(--glass-border);
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.analyst-drawer.open {
-    right: 0;
-}
-
-.drawer-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 1rem;
-}
-
 /* Section Dividers */
 .section-priority {
     border-radius: 0 8px 8px 0;

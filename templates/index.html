@@ -240,73 +240,6 @@
         </main>
     </div>
 
-    <!-- Analyst Drawer -->
-    <div id="analystDrawer" class="analyst-drawer">
-        <div class="drawer-header">
-            <div>
-                <h2 id="drawerSymbol" style="font-size: 1.75rem; font-weight: 900; margin: 0;">SYMBOL</h2>
-                <div id="drawerSector"
-                    style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 5px;">
-                    SECTOR</div>
-            </div>
-            <i class="fas fa-times" style="cursor: pointer; opacity: 0.4; font-size: 1.25rem;"
-                onclick="closeDrawer()"></i>
-        </div>
-
-        <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-            <div style="margin-bottom: 2rem;">
-                <label
-                    style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 10px;">Macro/Investment
-                    Thesis</label>
-                <textarea id="drawerThesis"
-                    style="width: 100%; height: 250px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; padding: 1.25rem; font-size: 0.85rem; line-height: 1.6; border-radius: 4px; resize: none;"
-                    placeholder="What is the high-level reason for owning/watching this ticker? Why now?"></textarea>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-                <div>
-                    <label
-                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 10px;">Conviction
-                        Bias</label>
-                    <select id="drawerBias"
-                        style="width: 100%; background: var(--bg-dark); border: 1px solid var(--glass-border); color: #fff; padding: 8px; border-radius: 4px;">
-                        <option value="Bullish">Heavy Bull</option>
-                        <option value="Bullish_Bias">Bullish Bias</option>
-                        <option value="Neutral">Neutral</option>
-                        <option value="Bearish">Tactical Short</option>
-                    </select>
-                </div>
-                <div>
-                    <label
-                        style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 10px;">Tactical
-                        Bucket</label>
-                    <select id="drawerBucket"
-                        style="width: 100%; background: var(--bg-dark); border: 1px solid var(--glass-border); color: #fff; padding: 8px; border-radius: 4px;">
-                        <option value="Holdings">Long Term</option>
-                        <option value="3Swing">3Swing Swing</option>
-                        <option value="4POS">4POS Core</option>
-                        <option value="Options">Alpha Options</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="drawerTimeline">
-                <label
-                    style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 15px;">Historical
-                    Observations</label>
-                <div id="timelineList" style="display: flex; flex-direction: column; gap: 15px;">
-                    <!-- Timeline entries -->
-                </div>
-            </div>
-        </div>
-
-        <div style="padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--glass-border);">
-            <button class="btn-primary" style="width: 100%; padding: 12px; font-weight: 700;"
-                onclick="saveAnalystUpdate()">UPDATE SOVEREIGN ANALYSIS</button>
-        </div>
-    </div>
-    </main>
-    </div>
 
     <!-- Edit/Add Modal -->
     <div id="setupModal" class="modal-overlay hidden">
@@ -588,14 +521,21 @@
 
         async function loadStrategyHub() {
             const tabsContainer = document.getElementById('strategyTabs');
+            if (!tabsContainer) return;
+            tabsContainer.innerHTML = '<div style="opacity: 0.5;">Loading Strategies...</div>';
+
             try {
                 const res = await axios.get('/api/strategies');
                 const strats = res.data;
+                if (!strats || strats.length === 0) {
+                    tabsContainer.innerHTML = '<div style="opacity: 0.5;">No strategies found. Add one in Quick Insert.</div>';
+                    return;
+                }
                 tabsContainer.innerHTML = strats.map((s, idx) => `
                     <div class="strategy-tab ${idx === 0 ? 'active' : ''}" 
                          style="padding: 10px 20px; background: ${idx === 0 ? 'var(--accent-primary)' : 'var(--card-bg)'}; border-radius: 20px; cursor: pointer; font-size: 0.75rem; border: 1px solid var(--glass-border);"
                          onclick="switchStrat(this, ${s.id})">
-                        ${s.name}
+                        ${s.name || 'Unnamed Strategy'}
                     </div>
                 `).join('');
 
@@ -603,6 +543,7 @@
                 if (strats.length > 0) loadStrategyTable(strats[0].id);
             } catch (err) {
                 console.error("Strat Hub Error:", err);
+                tabsContainer.innerHTML = '<div style="color: var(--danger);">Failed to load strategies.</div>';
             }
         }
 
@@ -622,33 +563,63 @@
             head.innerHTML = cols.map(c => `<th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">${c}</th>`).join('');
         }
 
+        async function loadBucket(bucketName) {
+            goToStep(5);
+            const body = document.getElementById('excelBody');
+            body.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Loading ${bucketName} Bucket...</td></tr>`;
+            try {
+                const res = await axios.get(`/api/setups?bucket=${bucketName}`);
+                renderStrategyTableRows(res.data);
+            } catch (err) {
+                console.error("Bucket Load Error:", err);
+            }
+        }
+
+        async function loadAttentionList() {
+            goToStep(5);
+            const body = document.getElementById('excelBody');
+            body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Scanning for setups needing attention...</td></tr>';
+            try {
+                const res = await axios.get('/api/setups?attention=true');
+                renderStrategyTableRows(res.data);
+            } catch (err) {
+                console.error("Attention Load Error:", err);
+            }
+        }
+
+        function renderStrategyTableRows(setups) {
+            const body = document.getElementById('excelBody');
+            if (!setups || setups.length === 0) {
+                body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">No active setups found for this view.</td></tr>';
+                return;
+            }
+            body.innerHTML = setups.map(s => `
+                <tr onclick="console.log('Setup:', ${JSON.stringify(s)})">
+                    <td style="opacity: 0.5;">${s.source || 'Analyst'}</td>
+                    <td style="font-weight: 500;">${s.strategy_name || 'N/A'}</td>
+                    <td style="color: var(--accent-primary);">${s.buy_date || '-'}</td>
+                    <td style="font-weight: 800; color: #fff; font-size: 0.9rem;">${s.symbol}</td>
+                    <td style="color: var(--warning);">${s.category || '-'}</td>
+                    <td><span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 3px;">${s.pattern_stage || '-'}</span></td>
+                    <td style="font-weight: 700;">${s.score_text || '-'}</td>
+                    <td style="font-size: 0.7rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.highlights || '-'}</td>
+                    <td>${s.breakout_zone || '-'}</td>
+                    <td style="color: var(--success); font-weight: 600;">${s.target_zone || '-'}</td>
+                    <td style="color: var(--danger);">${s.invalidation || '-'}</td>
+                    <td style="text-transform: uppercase; font-size: 0.65rem; opacity: 0.7;">${s.sector || '-'}</td>
+                    <td>${s.horizon || '-'}</td>
+                    <td style="color: var(--warning);">${s.confidence_stars || 0} ★</td>
+                    <td><span class="state-badge ${s.buy_wait_status === 'Buy' ? 'state-triggered' : 'state-monitoring'}">${s.buy_wait_status || 'Wait'}</span></td>
+                </tr>
+            `).join('');
+        }
+
         async function loadStrategyTable(stratId) {
             const body = document.getElementById('excelBody');
             body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Syncing with Analyst Database...</td></tr>';
-
             try {
                 const res = await axios.get(`/api/setups?strategy_id=${stratId}`);
-                const setups = res.data;
-
-                body.innerHTML = setups.map(s => `
-                    <tr>
-                        <td style="opacity: 0.5;">${s.source || 'Analyst'}</td>
-                        <td style="font-weight: 500;">${s.strategy_name || 'N/A'}</td>
-                        <td style="color: var(--accent-primary);">${s.buy_date || '-'}</td>
-                        <td style="font-weight: 800; color: #fff; font-size: 0.9rem;">${s.symbol}</td>
-                        <td style="color: var(--warning);">${s.category || '-'}</td>
-                        <td><span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 3px;">${s.pattern_stage || '-'}</span></td>
-                        <td style="font-weight: 700;">${s.score_text || '-'}</td>
-                        <td style="font-size: 0.7rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.highlights || '-'}</td>
-                        <td>${s.breakout_zone || '-'}</td>
-                        <td style="color: var(--success); font-weight: 600;">${s.target_zone || '-'}</td>
-                        <td style="color: var(--danger);">${s.invalidation || '-'}</td>
-                        <td style="text-transform: uppercase; font-size: 0.65rem; opacity: 0.7;">${s.sector || '-'}</td>
-                        <td>${s.horizon || '-'}</td>
-                        <td style="color: var(--warning);">${s.confidence_stars ? '★'.repeat(s.confidence_stars) : '-'}</td>
-                        <td><span class="state-badge ${s.buy_wait_status === 'Buy' ? 'state-triggered' : 'state-monitoring'}">${s.buy_wait_status || 'Wait'}</span></td>
-                    </tr>
-                `).join('');
+                renderStrategyTableRows(res.data);
             } catch (err) {
                 console.error("Table Load Error:", err);
             }
