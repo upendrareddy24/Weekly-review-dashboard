@@ -359,6 +359,10 @@
 
         async function loadStepData(type) {
             const body = document.getElementById(`${type}Body`);
+            if (activeWeek === null) {
+                body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 5rem; opacity: 0.8; font-size: 1.2rem; color: var(--warning);"><i class="fas fa-calendar-alt" style="display: block; font-size: 3rem; margin-bottom: 2rem;"></i> Please select a Calendar Week in <br><a href="#" onclick="goToStep(1)" style="color: var(--accent-primary); text-decoration: underline;">Step 1: SELECT WEEK</a> to view this data.</td></tr>`;
+                return;
+            }
             body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; opacity: 0.5;">Syncing institutional specs for CW${activeWeek}...</td></tr>`;
 
             try {
@@ -367,9 +371,9 @@
                 const data = res.data;
 
                 if (type === 'catalyst') {
-                    // Dynamic Slot Reconstruction
-                    const rows = data;
-                    const uniqueSlots = [...new Set(rows.map(r => r.time_slot))];
+                    // Robust Array Check
+                    const rows = Array.isArray(data) ? data : [];
+                    const uniqueSlots = [...new Set(rows.map(r => r.time_slot).filter(s => s))];
 
                     // Default slots if none exist
                     if (uniqueSlots.length === 0) uniqueSlots.push('BM (Before Market)', 'MH (Market Hours)', 'AM (After Market)');
@@ -403,7 +407,8 @@
                 }
             } catch (err) {
                 console.error(`Load ${type} failed:`, err);
-                body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; color: var(--danger);">Failed to sync database.</td></tr>`;
+                const errorMsg = err.response?.data?.error || err.message || "Unknown error";
+                body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; color: var(--danger);">Failed to sync database: ${errorMsg}</td></tr>`;
             }
         }
 
@@ -587,9 +592,10 @@
             let customCols = JSON.parse(localStorage.getItem('stratHubHeaders')) || defaultCols;
 
             head.innerHTML = customCols.map((c, i) => `
-                <th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">
+                <th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; border-bottom: 2px solid rgba(255,255,255,0.05);">
                     <input type="text" value="${c}" 
-                           style="background: transparent; border: none; color: inherit; font-size: inherit; text-transform: inherit; width: 100%; outline: none;"
+                           title="Click to rename this column"
+                           style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-transform: inherit; width: 100%; outline: none; padding: 4px; border-radius: 4px;"
                            onchange="updateHeader(${i}, this.value)">
                 </th>
             `).join('');

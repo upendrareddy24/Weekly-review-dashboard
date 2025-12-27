@@ -215,8 +215,8 @@ def get_catalysts():
         conn = get_db_connection()
         cur = get_db_cursor(conn)
         p = "%s" if DATABASE_URL else "?"
-        if week:
-            cur.execute(f'SELECT * FROM catalysts WHERE week_number = {p}', (week,))
+        if week and week.isdigit():
+            cur.execute(f'SELECT * FROM catalysts WHERE week_number = {p}', (int(week),))
         else:
             cur.execute('SELECT * FROM catalysts')
         items = cur.fetchall()
@@ -234,7 +234,10 @@ def get_macro_reviews():
         conn = get_db_connection()
         cur = get_db_cursor(conn)
         p = "%s" if DATABASE_URL else "?"
-        cur.execute(f'SELECT * FROM macro_reviews WHERE week_number = {p}', (week,))
+        if week and week.isdigit():
+            cur.execute(f'SELECT * FROM macro_reviews WHERE week_number = {p}', (int(week),))
+        else:
+            cur.execute('SELECT * FROM macro_reviews')
         items = cur.fetchall()
         conn.close()
         return jsonify([dict(i) for i in items])
@@ -249,7 +252,10 @@ def get_focus_reviews():
         conn = get_db_connection()
         cur = get_db_cursor(conn)
         p = "%s" if DATABASE_URL else "?"
-        cur.execute(f'SELECT * FROM focus_reviews WHERE week_number = {p}', (week,))
+        if week and week.isdigit():
+            cur.execute(f'SELECT * FROM focus_reviews WHERE week_number = {p}', (int(week),))
+        else:
+            cur.execute('SELECT * FROM focus_reviews')
         items = cur.fetchall()
         conn.close()
         return jsonify([dict(i) for i in items])
