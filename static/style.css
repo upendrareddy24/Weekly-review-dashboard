@@ -11,6 +11,8 @@
     --text-secondary: #a1a1aa;
     /* Zinc 400 */
     --success: #22c55e;
+    --accent-success: #15803d;
+    /* Darker green for buttons */
     --warning: #f59e0b;
     --danger: #ef4444;
     --glass-border: #27272a;
@@ -187,28 +189,65 @@ aside {
     color: var(--text-secondary);
 }
 
-/* State Badges */
-.state-badge {
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.65rem;
-    font-weight: 900;
-}
-
-.state-monitoring {
-    background: #3f3f46;
-    color: #a1a1aa;
-}
-
-.state-triggered {
+/* Button Improvements */
+.btn-primary {
     background: var(--accent-primary);
     color: #fff;
-    box-shadow: 0 0 10px var(--accent-glow);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
-.state-invalidated {
-    background: var(--danger);
-    color: #fff;
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+    filter: brightness(1.1);
+}
+
+.btn-secondary {
+    background: #27272a;
+    /* Zinc 800 */
+    color: #fafafa;
+    padding: 8px 16px;
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary:hover {
+    background: #3f3f46;
+    /* Zinc 700 */
+    border-color: var(--accent-primary);
+}
+
+/* Sidebar Improvements */
+.strat-item {
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.strat-item:hover {
+    background: var(--card-bg);
+    border-color: var(--glass-border);
+    color: var(--accent-primary);
+}
+
+.strat-item.active {
+    background: var(--accent-glow);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
 }
 
 /* Section Dividers */

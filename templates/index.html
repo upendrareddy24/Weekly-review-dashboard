@@ -45,14 +45,10 @@
                         style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem; opacity: 0.6;">
                         Tactical Buckets</h3>
                     <div id="bucketList">
-                        <div class="strat-item" onclick="loadBucket('Holdings')"
-                            style="cursor: pointer; padding: 10px; border-radius: 4px;">Holdings</div>
-                        <div class="strat-item" onclick="loadBucket('3Swing')"
-                            style="cursor: pointer; padding: 10px; border-radius: 4px;">3Swing Swings</div>
-                        <div class="strat-item" onclick="loadBucket('4POS')"
-                            style="cursor: pointer; padding: 10px; border-radius: 4px;">4POS Positional</div>
-                        <div class="strat-item" onclick="loadBucket('Options')"
-                            style="cursor: pointer; padding: 10px; border-radius: 4px;">Options Alpha</div>
+                        <div class="strat-item" onclick="loadBucket('Holdings', this)">Holdings</div>
+                        <div class="strat-item" onclick="loadBucket('3Swing', this)">3Swing Swings</div>
+                        <div class="strat-item" onclick="loadBucket('4POS', this)">4POS Positional</div>
+                        <div class="strat-item" onclick="loadBucket('Options', this)">Options Alpha</div>
                     </div>
                 </div>
 
@@ -82,12 +78,10 @@
                 <div class="wizard-step" id="step4Tab" onclick="goToStep(4)">4. Mag 7 Review</div>
                 <div class="wizard-step" id="step5Tab" onclick="goToStep(5)">5. Strategy Hub</div>
                 <div style="margin-left: auto; display: flex; gap: 10px;">
-                    <button class="btn-secondary" onclick="exportReport('active')" id="exportActiveBtn"
-                        style="font-size: 0.75rem; background: var(--card-bg); border: 1px solid var(--accent-primary);">
+                    <button class="btn-secondary" onclick="exportReport('active')" id="exportActiveBtn">
                         <i class="fas fa-file-pdf"></i> Export CW--
                     </button>
-                    <button class="btn-secondary" onclick="exportReport('all')"
-                        style="font-size: 0.75rem; background: var(--card-bg); border: 1px solid var(--accent-primary);">
+                    <button class="btn-secondary" onclick="exportReport('all')">
                         <i class="fas fa-copy"></i> Export All
                     </button>
                 </div>
@@ -131,10 +125,11 @@
                     <div
                         style="padding: 1rem; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
                         <button class="btn-secondary" onclick="addTableRow('catalystBody')"><i class="fas fa-plus"></i>
-                            Add Time Slot</button>
+                            Add
+                            Time Slot</button>
                         <button class="btn-primary" onclick="saveWizardStep('catalyst')"
-                            style="background: var(--accent-success);"><i class="fas fa-save"></i> Save Catalyst
-                            Radar</button>
+                            style="background: var(--success);"><i class="fas fa-save"></i>
+                            Save Catalyst Radar</button>
                     </div>
                 </div>
             </div>
@@ -171,8 +166,8 @@
                         <button class="btn-secondary" onclick="addTableRow('macroBody')"><i class="fas fa-plus"></i> Add
                             custom index</button>
                         <button class="btn-primary" onclick="saveWizardStep('macro')"
-                            style="background: var(--accent-success);"><i class="fas fa-save"></i> Save Macro
-                            Review</button>
+                            style="background: var(--success);"><i class="fas fa-save"></i>
+                            Save Macro Review</button>
                     </div>
                 </div>
             </div>
@@ -208,8 +203,8 @@
                         <button class="btn-secondary" onclick="addTableRow('focusBody')"><i class="fas fa-plus"></i> Add
                             Focus Ticker</button>
                         <button class="btn-primary" onclick="saveWizardStep('focus')"
-                            style="background: var(--accent-success);"><i class="fas fa-save"></i> Save Focus
-                            Radar</button>
+                            style="background: var(--success);"><i class="fas fa-save"></i>
+                            Save Focus Radar</button>
                     </div>
                 </div>
             </div>
@@ -314,6 +309,9 @@
                 notes.innerText = res.data.notes || '';
             } catch (err) {
                 console.error("Regime Load Error:", err);
+                const banner = document.getElementById('marketRegime');
+                banner.innerText = 'OFFLINE';
+                banner.style.color = 'var(--danger)';
             }
         }
 
@@ -364,25 +362,44 @@
             body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; opacity: 0.5;">Syncing institutional specs for CW${activeWeek}...</td></tr>`;
 
             try {
-                // In a real app, we'd fetch from /api/reviews?type=type&week=activeWeek
-                // For now, we seed with spec defaults if no data exists
-                let data = [];
+                const res = await axios.get(`/api/${type}_reviews?week_number=${activeWeek}`);
+                const data = res.data;
+
                 if (type === 'catalyst') {
-                    data = [
-                        { slot: 'BM (Before Market)', m: '', t: '', w: '', th: '', f: '' },
-                        { slot: 'MH (Market Hours)', m: '', t: '', w: '', th: '', f: '' },
-                        { slot: 'AM (After Market)', m: '', t: '', w: '', th: '', f: '' }
-                    ];
-                    renderCatalystRows(data);
+                    // Reconstruct grid from flattened rows
+                    const gridRes = await axios.get(`/api/catalysts?week_number=${activeWeek}`);
+                    const rows = gridRes.data;
+                    const slots = ['BM (Before Market)', 'MH (Market Hours)', 'AM (After Market)'];
+                    const reconstructed = slots.map(s => {
+                        const rowData = { slot: s, m: '', t: '', w: '', th: '', f: '' };
+                        rows.filter(r => r.time_slot === s).forEach(r => {
+                            if (r.day === 'Monday') rowData.m = r.event;
+                            if (r.day === 'Tuesday') rowData.t = r.event;
+                            if (r.day === 'Wednesday') rowData.w = r.event;
+                            if (r.day === 'Thursday') rowData.th = r.event;
+                            if (r.day === 'Friday') rowData.f = r.event;
+                        });
+                        return rowData;
+                    });
+                    renderCatalystRows(reconstructed);
                 } else if (type === 'macro') {
-                    data = macroIndices.map(s => ({ ticker: s, trend: 'Neutral', notes: '', entry: '', exit: '', sl: '', tickers: '' }));
-                    renderMacroRows(data);
+                    if (data.length === 0) {
+                        const defaults = macroIndices.map(s => ({ ticker: s, trend_labels: 'Neutral', trade_notes: '', entry: '', exit_val: '', sl: '', tickers: '' }));
+                        renderMacroRows(defaults);
+                    } else {
+                        renderMacroRows(data.map(r => ({ ticker: r.ticker, trend: r.trend_labels, notes: r.trade_notes, entry: r.entry, exit: r.exit_val, sl: r.sl, tickers: '' })));
+                    }
                 } else if (type === 'focus') {
-                    data = mag7Tickers.map(s => ({ stock: s, trend: 'Watch', entry: '', target: '', sl: '', comments: '' }));
-                    renderFocusRows(data);
+                    if (data.length === 0) {
+                        const defaults = mag7Tickers.map(s => ({ stock: s, trend: 'Watch', entry: '', target: '', sl: '', comments: '' }));
+                        renderFocusRows(defaults);
+                    } else {
+                        renderFocusRows(data.map(r => ({ stock: r.ticker, trend: r.trend, entry: r.entry, target: r.target, sl: r.sl, comments: r.comments })));
+                    }
                 }
             } catch (err) {
                 console.error(`Load ${type} failed:`, err);
+                body.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 2rem; color: var(--danger);">Failed to sync database.</td></tr>`;
             }
         }
 
@@ -543,7 +560,8 @@
                 if (strats.length > 0) loadStrategyTable(strats[0].id);
             } catch (err) {
                 console.error("Strat Hub Error:", err);
-                tabsContainer.innerHTML = '<div style="color: var(--danger);">Failed to load strategies.</div>';
+                const msg = err.response ? `Server Error: ${err.response.status}` : "Network Error / Offline";
+                tabsContainer.innerHTML = `<div style="color: var(--danger); font-size: 0.8rem;">${msg} - Failed to load strategies.</div>`;
             }
         }
 
@@ -563,7 +581,10 @@
             head.innerHTML = cols.map(c => `<th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">${c}</th>`).join('');
         }
 
-        async function loadBucket(bucketName) {
+        async function loadBucket(bucketName, el) {
+            document.querySelectorAll('.strat-item').forEach(item => item.classList.remove('active'));
+            if (el) el.classList.add('active');
+
             goToStep(5);
             const body = document.getElementById('excelBody');
             body.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Loading ${bucketName} Bucket...</td></tr>`;
@@ -576,6 +597,9 @@
         }
 
         async function loadAttentionList() {
+            document.querySelectorAll('.strat-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('attentionBtn').classList.add('active');
+
             goToStep(5);
             const body = document.getElementById('excelBody');
             body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Scanning for setups needing attention...</td></tr>';

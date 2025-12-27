@@ -44,21 +44,27 @@ def index():
 
 @app.route('/api/strategies', methods=['GET'])
 def get_strategies():
-    conn = get_db_connection()
-    cur = get_db_cursor(conn)
-    cur.execute('SELECT * FROM strategies')
-    strategies = cur.fetchall()
-    conn.close()
-    return jsonify([dict(s) for s in strategies])
+    try:
+        conn = get_db_connection()
+        cur = get_db_cursor(conn)
+        cur.execute('SELECT * FROM strategies')
+        strategies = cur.fetchall()
+        conn.close()
+        return jsonify([dict(s) for s in strategies])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/tickers', methods=['GET'])
 def get_tickers():
-    conn = get_db_connection()
-    cur = get_db_cursor(conn)
-    cur.execute('SELECT * FROM tickers')
-    tickers = cur.fetchall()
-    conn.close()
-    return jsonify([dict(t) for t in tickers])
+    try:
+        conn = get_db_connection()
+        cur = get_db_cursor(conn)
+        cur.execute('SELECT * FROM tickers')
+        tickers = cur.fetchall()
+        conn.close()
+        return jsonify([dict(t) for t in tickers])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/setups', methods=['GET'])
 def get_setups():
@@ -123,19 +129,22 @@ def update_ticker(symbol):
 
 @app.route('/api/market/regime', methods=['GET', 'POST'])
 def market_regime():
-    conn = get_db_connection()
-    cur = get_db_cursor(conn)
-    if request.method == 'POST':
-        data = request.json
-        p = "%s" if DATABASE_URL else "?"
-        cur.execute(f"INSERT INTO market_snapshots (date, regime, notes) VALUES ({p}, {p}, {p})",
-                   (datetime.now().strftime('%Y-%m-%d'), data['regime'], data.get('notes', '')))
-        conn.commit()
-    
-    cur.execute('SELECT * FROM market_snapshots ORDER BY date DESC LIMIT 1')
-    regime = cur.fetchone()
-    conn.close()
-    return jsonify(dict(regime) if regime else {"regime": "Neutral", "notes": "No snapshot taken."})
+    try:
+        conn = get_db_connection()
+        cur = get_db_cursor(conn)
+        if request.method == 'POST':
+            data = request.json
+            p = "%s" if DATABASE_URL else "?"
+            cur.execute(f"INSERT INTO market_snapshots (date, regime, notes) VALUES ({p}, {p}, {p})",
+                       (datetime.now().strftime('%Y-%m-%d'), data['regime'], data.get('notes', '')))
+            conn.commit()
+        
+        cur.execute('SELECT * FROM market_snapshots ORDER BY date DESC LIMIT 1')
+        regime = cur.fetchone()
+        conn.close()
+        return jsonify(dict(regime) if regime else {"regime": "Neutral", "notes": "No snapshot taken."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/setups', methods=['POST'])
 def save_setup():
@@ -193,17 +202,48 @@ def get_filters():
 
 @app.route('/api/catalysts', methods=['GET'])
 def get_catalysts():
-    week = request.args.get('week_number')
-    conn = get_db_connection()
-    cur = get_db_cursor(conn)
-    p = "%s" if DATABASE_URL else "?"
-    if week:
-        cur.execute(f'SELECT * FROM catalysts WHERE week_number = {p}', (week,))
-    else:
-        cur.execute('SELECT * FROM catalysts')
-    items = cur.fetchall()
-    conn.close()
-    return jsonify([dict(i) for i in items])
+    try:
+        week = request.args.get('week_number')
+        conn = get_db_connection()
+        cur = get_db_cursor(conn)
+        p = "%s" if DATABASE_URL else "?"
+        if week:
+            cur.execute(f'SELECT * FROM catalysts WHERE week_number = {p}', (week,))
+        else:
+            cur.execute('SELECT * FROM catalysts')
+        items = cur.fetchall()
+        conn.close()
+        return jsonify([dict(i) for i in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/macro_reviews', methods=['GET'])
+def get_macro_reviews():
+    try:
+        week = request.args.get('week_number')
+        conn = get_db_connection()
+        cur = get_db_cursor(conn)
+        p = "%s" if DATABASE_URL else "?"
+        cur.execute(f'SELECT * FROM macro_reviews WHERE week_number = {p}', (week,))
+        items = cur.fetchall()
+        conn.close()
+        return jsonify([dict(i) for i in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/focus_reviews', methods=['GET'])
+def get_focus_reviews():
+    try:
+        week = request.args.get('week_number')
+        conn = get_db_connection()
+        cur = get_db_cursor(conn)
+        p = "%s" if DATABASE_URL else "?"
+        cur.execute(f'SELECT * FROM focus_reviews WHERE week_number = {p}', (week,))
+        items = cur.fetchall()
+        conn.close()
+        return jsonify([dict(i) for i in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/wizard/save', methods=['POST'])
 def save_wizard_step():
@@ -220,10 +260,15 @@ def save_wizard_step():
         if step_type == 'catalyst':
             cur.execute(f"DELETE FROM catalysts WHERE week_number = {p}", (week,))
             for r in rows:
-                cur.execute(f"""
-                    INSERT INTO catalysts (week_number, week_start, day, time_slot, event)
-                    VALUES ({p}, {p}, {p}, {p}, {p})
-                """, (week, 'CW'+str(week), r.get('day', ''), r.get('time_slot', ''), r.get('event', '')))
+                slot = r.get('slot', '')
+                days = {'Monday': 'm', 'Tuesday': 't', 'Wednesday': 'w', 'Thursday': 'th', 'Friday': 'f'}
+                for day_name, key in days.items():
+                    event = r.get(key, '')
+                    if event: # Only save if there's an event
+                        cur.execute(f"""
+                            INSERT INTO catalysts (week_number, week_start, day, time_slot, event)
+                            VALUES ({p}, {p}, {p}, {p}, {p})
+                        """, (week, 'CW'+str(week), day_name, slot, event))
         
         elif step_type == 'macro':
             cur.execute(f"DELETE FROM macro_reviews WHERE week_number = {p}", (week,))
@@ -251,7 +296,7 @@ def save_wizard_step():
 
 if __name__ == '__main__':
     # Initialize DB if not exists
-    if not os.path.exists(DB_PATH):
-        print("Database not found. Please run backend/import_data.py first.")
+    if not os.path.exists(SQLITE_DB_PATH):
+        print(f"Database not found at {SQLITE_DB_PATH}. Please run backend/import_data.py first.")
     
     app.run(debug=False, port=int(os.getenv("PORT", 5012)))
