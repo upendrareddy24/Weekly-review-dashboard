@@ -154,6 +154,13 @@ def market_regime():
         print(f"!!! REGIME ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
+def log_debug(msg):
+    try:
+        with open("backend_debug.log", "a") as f:
+            f.write(f"[{datetime.now()}] {msg}\n")
+    except:
+        pass
+
 @app.route('/api/setups', methods=['POST'])
 def save_setup():
     data = request.json
@@ -166,7 +173,7 @@ def save_setup():
         if val == "":
             data[key] = None
             
-    print(f"DEBUG SAVE_SETUP: {data}")
+    log_debug(f"SAVE_SETUP REQUEST: {data}")
 
     try:
         if data.get('id'):
@@ -196,6 +203,7 @@ def save_setup():
             set_clause = ", ".join([f"{col} = {p}" for col in columns])
             values.append(setup_id)
             
+            log_debug(f"UPDATING SETUP {setup_id}: {columns}")
             cur.execute(f"UPDATE setups SET {set_clause} WHERE id = {p}", tuple(values))
         else:
             # Handle creation (with ticker lookup/creation)
@@ -203,6 +211,7 @@ def save_setup():
             cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (symbol,))
             ticker = cur.fetchone()
             if not ticker:
+                log_debug(f"CREATING TICKER: {symbol}")
                 cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (symbol,))
                 ticker_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
             else:
@@ -216,14 +225,16 @@ def save_setup():
             
             cols = ", ".join(data.keys())
             placeholders = ", ".join([p] * len(data))
+            
+            log_debug(f"INSERTING SETUP: {data}")
             cur.execute(f"INSERT INTO setups ({cols}) VALUES ({placeholders}){' RETURNING id' if DATABASE_URL else ''}", tuple(data.values()))
             new_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
         
         conn.commit()
         return jsonify({"success": True, "id": new_id if not data.get('id') else data.get('id')})
     except Exception as e:
-        print(f"ERROR Save_Setup: {e}")
-        traceback.print_exc()
+        log_debug(f"ERROR Save_Setup: {e}")
+        log_debug(traceback.format_exc())
         return jsonify({"error": str(e)}), 400
     finally:
         conn.close()
