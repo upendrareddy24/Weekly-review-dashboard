@@ -52,6 +52,7 @@ def get_strategies():
         conn.close()
         return jsonify([dict(s) for s in strategies])
     except Exception as e:
+        print(f"ERROR: {e}")
         print(f"!!! STRATEGIES ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -65,6 +66,7 @@ def get_tickers():
         conn.close()
         return jsonify([dict(t) for t in tickers])
     except Exception as e:
+        print(f"ERROR: {e}")
         print(f"!!! TICKERS ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -125,6 +127,7 @@ def update_ticker(symbol):
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
+        print(f"ERROR: {e}")
         return jsonify({"error": str(e)}), 400
     finally:
         conn.close()
@@ -146,6 +149,7 @@ def market_regime():
         conn.close()
         return jsonify(dict(regime) if regime else {"regime": "Neutral", "notes": "No snapshot taken."})
     except Exception as e:
+        print(f"ERROR: {e}")
         print(f"!!! REGIME ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -185,6 +189,7 @@ def save_setup():
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
+        print(f"ERROR: {e}")
         return jsonify({"error": str(e)}), 400
     finally:
         conn.close()
@@ -218,6 +223,7 @@ def get_catalysts():
         conn.close()
         return jsonify([dict(i) for i in items])
     except Exception as e:
+        print(f"ERROR: {e}")
         print(f"!!! CATALYSTS ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -233,6 +239,7 @@ def get_macro_reviews():
         conn.close()
         return jsonify([dict(i) for i in items])
     except Exception as e:
+        print(f"ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/focus_reviews', methods=['GET'])
@@ -247,6 +254,7 @@ def get_focus_reviews():
         conn.close()
         return jsonify([dict(i) for i in items])
     except Exception as e:
+        print(f"ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/wizard/save', methods=['POST'])
@@ -278,9 +286,9 @@ def save_wizard_step():
             cur.execute(f"DELETE FROM macro_reviews WHERE week_number = {p}", (week,))
             for r in rows:
                 cur.execute(f"""
-                    INSERT INTO macro_reviews (week_number, ticker, trend_labels, trade_notes, entry, exit_val, sl)
-                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p})
-                """, (week, r['ticker'], r['trend'], r['notes'], r['entry'], r['exit'], r['sl']))
+                    INSERT INTO macro_reviews (week_number, ticker, trend_labels, trade_notes, entry, exit_val, sl, tickers)
+                    VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+                """, (week, r['ticker'], r.get('trend', 'Neutral'), r.get('notes', ''), r.get('entry', ''), r.get('exit', ''), r.get('sl', ''), r.get('tickers', '')))
         
         elif step_type == 'focus':
             cur.execute(f"DELETE FROM focus_reviews WHERE week_number = {p}", (week,))
@@ -293,6 +301,7 @@ def save_wizard_step():
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
+        print(f"ERROR: {e}")
         print(f"Save Wizard Error: {e}")
         return jsonify({"error": str(e)}), 400
     finally:

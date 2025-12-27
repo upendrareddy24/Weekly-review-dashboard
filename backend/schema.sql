@@ -70,7 +70,8 @@ CREATE TABLE IF NOT EXISTS macro_reviews (
     trade_notes TEXT,
     entry TEXT,
     exit_val TEXT,
-    sl TEXT
+    sl TEXT,
+    tickers TEXT
 );
 
 CREATE TABLE IF NOT EXISTS focus_reviews (
