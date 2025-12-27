@@ -554,6 +554,8 @@
                     }, 500);
                 } catch (err) {
                     console.error("Add Setup Error:", err);
+                    const msg = err.response?.data?.error || err.message || "Unknown Error";
+                    alert(`Failed to add ticker: ${msg}`);
                 }
                 return;
             }
