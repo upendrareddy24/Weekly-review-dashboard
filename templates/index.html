@@ -296,6 +296,7 @@
         let activeWeek = null;
         let activeStep = 1;
         let activeStratId = null;
+        let activeBucket = null;
         let mag7Tickers = ['AAPL', 'AMD', 'AMZN', 'AVGO', 'GOOGL', 'META', 'MSFT', 'NFLX', 'NVDA', 'TSLA'];
         let macroIndices = ['SPY', 'QQQ', 'IWM', 'GOLD', 'VIX', 'BTC', 'ETHE', 'FXI'];
 
@@ -483,8 +484,13 @@
                 const symbol = prompt("Enter Ticker Symbol:");
                 if (!symbol) return;
                 try {
-                    await axios.post('/api/setups', { symbol, strategy_id: activeStratId });
-                    loadStrategyTable(activeStratId);
+                    await axios.post('/api/setups', {
+                        symbol,
+                        strategy_id: activeStratId,
+                        bucket: activeBucket
+                    });
+                    if (activeBucket) loadBucket(activeBucket);
+                    else loadStrategyTable(activeStratId);
                 } catch (err) {
                     console.error("Add Setup Error:", err);
                 }
@@ -630,6 +636,8 @@
         }
 
         async function loadBucket(bucketName, el) {
+            activeBucket = bucketName;
+            activeStratId = null;
             document.querySelectorAll('.strat-item').forEach(item => item.classList.remove('active'));
             if (el) el.classList.add('active');
 
@@ -668,9 +676,9 @@
             body.innerHTML = setups.map(s => `
                 <tr data-id="${s.id}">
                     <td><input type="text" value="${s.source || ''}" class="input-inline" style="opacity: 0.5; font-size: 0.7rem;" onchange="updateSetupField(${s.id}, 'source', this.value)"></td>
-                    <td><input type="text" value="${s.strategy_name || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'strategy_name', this.value)"></td>
+                    <td><input type="text" value="${s.strategy_name || s.parent_strategy || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'strategy_name', this.value)"></td>
                     <td><input type="text" value="${s.buy_date || ''}" class="input-inline" style="color: var(--accent-primary);" onchange="updateSetupField(${s.id}, 'buy_date', this.value)"></td>
-                    <td style="font-weight: 800; color: #fff;">${s.symbol}</td>
+                    <td><input type="text" value="${s.symbol}" class="input-inline" style="font-weight: 800; color: #fff; text-transform: uppercase;" onchange="updateTickerField(${s.id}, this.value)"></td>
                     <td><input type="text" value="${s.category || ''}" class="input-inline" style="color: var(--warning);" onchange="updateSetupField(${s.id}, 'category', this.value)"></td>
                     <td><input type="text" value="${s.pattern_stage || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'pattern_stage', this.value)"></td>
                     <td><input type="text" value="${s.score_text || ''}" class="input-inline" style="font-weight: 700;" onchange="updateSetupField(${s.id}, 'score_text', this.value)"></td>
@@ -703,7 +711,18 @@
             }
         }
 
+        async function updateTickerField(id, symbol) {
+            try {
+                await axios.post('/api/setups', { id, symbol: symbol.toUpperCase() });
+                console.log(`Updated Ticker for setup ${id} to ${symbol}`);
+            } catch (err) {
+                console.error("Ticker Update Error:", err);
+            }
+        }
+
         async function loadStrategyTable(stratId) {
+            activeStratId = stratId;
+            activeBucket = null;
             const body = document.getElementById('excelBody');
             body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Syncing with Analyst Database...</td></tr>';
             try {

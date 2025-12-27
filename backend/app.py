@@ -80,7 +80,7 @@ def get_setups():
     cur = get_db_cursor(conn)
     
     query = """
-        SELECT s.*, t.symbol, t.sector, t.thesis, t.bias, st.name as strategy_name
+        SELECT s.*, t.symbol, t.sector, t.thesis, t.bias, st.name as parent_strategy
         FROM setups s
         JOIN tickers t ON s.ticker_id = t.id
         JOIN strategies st ON s.strategy_id = st.id
@@ -163,6 +163,19 @@ def save_setup():
         if data.get('id'):
             # Flexible update for any column passed in the JSON
             setup_id = data.pop('id')
+            
+            # Special handling for symbol update -> change ticker_id
+            if 'symbol' in data:
+                symbol = data.pop('symbol')
+                cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (symbol,))
+                ticker = cur.fetchone()
+                if not ticker:
+                    cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (symbol,))
+                    ticker_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
+                else:
+                    ticker_id = ticker['id']
+                data['ticker_id'] = ticker_id
+
             columns = data.keys()
             values = list(data.values())
             
