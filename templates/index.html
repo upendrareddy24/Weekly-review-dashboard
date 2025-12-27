@@ -220,22 +220,20 @@
                     <div id="hubFilters"
                         style="display: flex; gap: 15px; align-items: center; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border);">
                         <span
-                            style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Filters:</span>
-                        <input type="text" id="filterTicker" placeholder="Search Ticker..." class="input-inline"
-                            style="width: 150px; border: 1px solid var(--glass-border); padding: 5px 10px;"
-                            oninput="applyHubFilters()">
-                        <select id="filterStatus" class="input-inline"
-                            style="width: 120px; border: 1px solid var(--glass-border); background: var(--bg-dark);"
-                            onchange="applyHubFilters()">
-                            <option value="">All Status</option>
-                            <option value="Buy">Buy Only</option>
-                            <option value="Wait">Wait Only</option>
-                        </select>
-                        <input type="text" id="filterSector" placeholder="Filter Sector..." class="input-inline"
-                            style="width: 150px; border: 1px solid var(--glass-border); padding: 5px 10px;"
-                            oninput="applyHubFilters()">
-                        <button class="btn-secondary" style="font-size: 0.65rem; padding: 5px 10px;"
-                            onclick="clearHubFilters()">Clear</button>
+                            style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Universal
+                            Search:</span>
+                        <div style="position: relative; flex: 1; display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="hubSearch"
+                                placeholder="Search anything (ticker, sector, score > 8, status:buy)..."
+                                class="input-inline"
+                                style="width: 100%; border: 1px solid var(--glass-border); padding: 8px 12px; font-size: 0.8rem;"
+                                oninput="applyHubFilters()">
+                            <button class="btn-secondary" style="font-size: 0.65rem; padding: 5px 15px; height: 35px;"
+                                onclick="clearHubFilters()">Clear</button>
+                        </div>
+                        <div id="filterStats"
+                            style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.8; white-space: nowrap;">
+                        </div>
                     </div>
                 </div>
 
@@ -748,16 +746,48 @@
         }
 
         function applyHubFilters() {
-            const tickerQ = document.getElementById('filterTicker').value.toUpperCase();
-            const statusQ = document.getElementById('filterStatus').value;
-            const sectorQ = document.getElementById('filterSector').value.toLowerCase();
+            const query = document.getElementById('hubSearch').value.toLowerCase().trim();
+            const stats = document.getElementById('filterStats');
 
-            const filtered = currentSetups.filter(s => {
-                const matchTicker = !tickerQ || s.symbol.toUpperCase().includes(tickerQ);
-                const matchStatus = !statusQ || s.buy_wait_status === statusQ;
-                const matchSector = !sectorQ || (s.sector || '').toLowerCase().includes(sectorQ);
-                return matchTicker && matchStatus && matchSector;
-            });
+            let filtered = currentSetups;
+
+            if (query) {
+                filtered = currentSetups.filter(s => {
+                    // 1. Check for specific syntax like "score > 5" or "status:buy"
+                    if (query.includes('>') || query.includes('<') || query.includes('=')) {
+                        const parts = query.split(/[><=]/);
+                        const field = parts[0].trim().replace(' ', '_');
+                        const operator = query.match(/[><=]/)[0];
+                        const val = parseFloat(parts[1].trim());
+
+                        // Map frontend nicknames to DB fields
+                        let dbField = field;
+                        if (field === 'score') dbField = 'score_text';
+
+                        const actualVal = parseFloat(s[dbField]);
+                        if (!isNaN(actualVal) && !isNaN(val)) {
+                            if (operator === '>') return actualVal > val;
+                            if (operator === '<') return actualVal < val;
+                            if (operator === '=') return actualVal === val;
+                        }
+                    }
+
+                    if (query.includes(':')) {
+                        const [field, val] = query.split(':');
+                        const f = field.trim().replace(' ', '_');
+                        const v = val.trim();
+
+                        let target = s[f] || (f === 'status' ? s.buy_wait_status : '');
+                        return String(target).toLowerCase().includes(v);
+                    }
+
+                    // 2. Default: Search across all relevant text fields
+                    const searchStr = `${s.symbol} ${s.sector} ${s.category} ${s.score_text} ${s.highlights} ${s.buy_wait_status} ${s.strategy_name || s.parent_strategy}`.toLowerCase();
+                    return searchStr.includes(query);
+                });
+            }
+
+            if (stats) stats.innerText = `Showing ${filtered.length} of ${currentSetups.length} setups`;
 
             const body = document.getElementById('excelBody');
             if (!filtered || filtered.length === 0) {
@@ -793,20 +823,33 @@
 
         async function updateSetupField(id, field, value) {
             try {
+                // Update local buffer first for instant filter response
+                const item = currentSetups.find(s => s.id === id);
+                if (item) {
+                    item[field] = value;
+                    console.log(`Updated Local Buffer ${id}: ${field} = ${value}`);
+                }
+
                 const payload = { id };
                 payload[field] = value;
+
+                // Visual feedback
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) row.style.opacity = "0.5";
+
                 await axios.post('/api/setups', payload);
-                console.log(`Updated setup ${id}: ${field} = ${value}`);
+                if (row) row.style.opacity = "1";
+                console.log(`Saved to DB: ${id}: ${field} = ${value}`);
             } catch (err) {
                 console.error("Field Update Error:", err);
-                alert("Failed to save change. Check console.");
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) row.style.background = "rgba(239, 68, 68, 0.1)";
+                alert("Failed to save. Your changes might be lost on refresh.");
             }
         }
 
         function clearHubFilters() {
-            document.getElementById('filterTicker').value = '';
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterSector').value = '';
+            document.getElementById('hubSearch').value = '';
             applyHubFilters();
         }
 
