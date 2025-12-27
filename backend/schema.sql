@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS catalysts (
 );
 
 CREATE TABLE IF NOT EXISTS macro_reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     week_number INTEGER NOT NULL,
     ticker TEXT NOT NULL,
     trend_labels TEXT,    -- e.g. "Long: Bullish, Short: Bearish"
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS macro_reviews (
 );
 
 CREATE TABLE IF NOT EXISTS focus_reviews (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     week_number INTEGER NOT NULL,
     ticker TEXT NOT NULL,
     trend TEXT,
