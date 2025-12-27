@@ -161,30 +161,35 @@ def save_setup():
     p = "%s" if DATABASE_URL else "?"
     try:
         if data.get('id'):
-            cur.execute(f"""
-                UPDATE setups SET 
-                status = {p}, rating = {p}, score = {p}, entry = {p}, 
-                target = {p}, sl = {p}, rr = {p}, comments = {p}, date = {p}
-                WHERE id = {p}
-            """, (data['status'], data['rating'], data['score'], data['entry'], 
-                  data['target'], data['sl'], data['rr'], data['comments'], 
-                  data.get('date', datetime.now().strftime('%Y-%m-%d')), data['id']))
+            # Flexible update for any column passed in the JSON
+            setup_id = data.pop('id')
+            columns = data.keys()
+            values = list(data.values())
+            
+            set_clause = ", ".join([f"{col} = {p}" for col in columns])
+            values.append(setup_id)
+            
+            cur.execute(f"UPDATE setups SET {set_clause} WHERE id = {p}", tuple(values))
         else:
-            cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (data['symbol'],))
+            # Handle creation (with ticker lookup/creation)
+            symbol = data.get('symbol', 'UNKNOWN')
+            cur.execute(f'SELECT id FROM tickers WHERE symbol = {p}', (symbol,))
             ticker = cur.fetchone()
             if not ticker:
-                cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (data['symbol'],))
+                cur.execute(f'INSERT INTO tickers (symbol) VALUES ({p}){" RETURNING id" if DATABASE_URL else ""}', (symbol,))
                 ticker_id = cur.fetchone()[0] if DATABASE_URL else cur.lastrowid
             else:
                 ticker_id = ticker['id']
             
-            cur.execute(f"""
-                INSERT INTO setups 
-                (ticker_id, strategy_id, date, status, rating, score, entry, target, sl, rr, comments)
-                VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
-            """, (ticker_id, data['strategy_id'], data.get('date', datetime.now().strftime('%Y-%m-%d')),
-                  data['status'], data['rating'], data['score'], data['entry'], 
-                  data['target'], data['sl'], data['rr'], data['comments']))
+            # Map frontend names to DB names if necessary, or just use they keys
+            data['ticker_id'] = ticker_id
+            data.pop('symbol', None)
+            if 'date' not in data:
+                data['date'] = datetime.now().strftime('%Y-%m-%d')
+            
+            cols = ", ".join(data.keys())
+            placeholders = ", ".join([p] * len(data))
+            cur.execute(f"INSERT INTO setups ({cols}) VALUES ({placeholders})", tuple(data.values()))
         
         conn.commit()
         return jsonify({"success": True})

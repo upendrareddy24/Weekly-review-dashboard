@@ -231,6 +231,10 @@
                         </tbody>
                     </table>
                 </div>
+                <div style="padding: 1rem; display: flex; justify-content: flex-end;">
+                    <button class="btn-secondary" onclick="addTableRow('excelBody')"><i class="fas fa-plus"></i> Add
+                        Manual Setup</button>
+                </div>
             </div>
         </main>
     </div>
@@ -291,6 +295,7 @@
     <script>
         let activeWeek = null;
         let activeStep = 1;
+        let activeStratId = null;
         let mag7Tickers = ['AAPL', 'AMD', 'AMZN', 'AVGO', 'GOOGL', 'META', 'MSFT', 'NFLX', 'NVDA', 'TSLA'];
         let macroIndices = ['SPY', 'QQQ', 'IWM', 'GOLD', 'VIX', 'BTC', 'ETHE', 'FXI'];
 
@@ -472,8 +477,19 @@
             `).join('');
         }
 
-        function addTableRow(id) {
+        async function addTableRow(id) {
             const body = document.getElementById(id);
+            if (id === 'excelBody') {
+                const symbol = prompt("Enter Ticker Symbol:");
+                if (!symbol) return;
+                try {
+                    await axios.post('/api/setups', { symbol, strategy_id: activeStratId });
+                    loadStrategyTable(activeStratId);
+                } catch (err) {
+                    console.error("Add Setup Error:", err);
+                }
+                return;
+            }
             const tr = document.createElement('tr');
             if (id === 'catalystBody') {
                 tr.innerHTML = `<td><input type="text" placeholder="Slot" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td><input type="text" class="input-inline"></td><td style="text-align: right;"><i class="fas fa-times-circle" style="opacity: 0.2; cursor: pointer;" onclick="this.closest('tr').remove()"></i></td>`;
@@ -566,7 +582,10 @@
                 `).join('');
 
                 renderExcelHeaders();
-                if (strats.length > 0) loadStrategyTable(strats[0].id);
+                if (strats.length > 0) {
+                    activeStratId = strats[0].id;
+                    loadStrategyTable(strats[0].id);
+                }
             } catch (err) {
                 console.error("Strat Hub Error:", err);
                 const msg = err.response ? `Server Error: ${err.response.status}` : "Network Error / Offline";
@@ -575,6 +594,7 @@
         }
 
         function switchStrat(el, id) {
+            activeStratId = id;
             document.querySelectorAll('.strategy-tab').forEach(t => {
                 t.style.background = 'var(--card-bg)';
                 t.classList.remove('active');
@@ -646,24 +666,41 @@
                 return;
             }
             body.innerHTML = setups.map(s => `
-                <tr onclick="console.log('Setup:', ${JSON.stringify(s)})">
-                    <td style="opacity: 0.5;">${s.source || 'Analyst'}</td>
-                    <td style="font-weight: 500;">${s.strategy_name || 'N/A'}</td>
-                    <td style="color: var(--accent-primary);">${s.buy_date || '-'}</td>
-                    <td style="font-weight: 800; color: #fff; font-size: 0.9rem;">${s.symbol}</td>
-                    <td style="color: var(--warning);">${s.category || '-'}</td>
-                    <td><span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 3px;">${s.pattern_stage || '-'}</span></td>
-                    <td style="font-weight: 700;">${s.score_text || '-'}</td>
-                    <td style="font-size: 0.7rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.highlights || '-'}</td>
-                    <td>${s.breakout_zone || '-'}</td>
-                    <td style="color: var(--success); font-weight: 600;">${s.target_zone || '-'}</td>
-                    <td style="color: var(--danger);">${s.invalidation || '-'}</td>
-                    <td style="text-transform: uppercase; font-size: 0.65rem; opacity: 0.7;">${s.sector || '-'}</td>
-                    <td>${s.horizon || '-'}</td>
-                    <td style="color: var(--warning);">${s.confidence_stars || 0} ★</td>
-                    <td><span class="state-badge ${s.buy_wait_status === 'Buy' ? 'state-triggered' : 'state-monitoring'}">${s.buy_wait_status || 'Wait'}</span></td>
+                <tr data-id="${s.id}">
+                    <td><input type="text" value="${s.source || ''}" class="input-inline" style="opacity: 0.5; font-size: 0.7rem;" onchange="updateSetupField(${s.id}, 'source', this.value)"></td>
+                    <td><input type="text" value="${s.strategy_name || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'strategy_name', this.value)"></td>
+                    <td><input type="text" value="${s.buy_date || ''}" class="input-inline" style="color: var(--accent-primary);" onchange="updateSetupField(${s.id}, 'buy_date', this.value)"></td>
+                    <td style="font-weight: 800; color: #fff;">${s.symbol}</td>
+                    <td><input type="text" value="${s.category || ''}" class="input-inline" style="color: var(--warning);" onchange="updateSetupField(${s.id}, 'category', this.value)"></td>
+                    <td><input type="text" value="${s.pattern_stage || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'pattern_stage', this.value)"></td>
+                    <td><input type="text" value="${s.score_text || ''}" class="input-inline" style="font-weight: 700;" onchange="updateSetupField(${s.id}, 'score_text', this.value)"></td>
+                    <td><input type="text" value="${s.highlights || ''}" class="input-inline" style="font-size: 0.7rem; color: var(--text-secondary);" onchange="updateSetupField(${s.id}, 'highlights', this.value)"></td>
+                    <td><input type="text" value="${s.breakout_zone || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'breakout_zone', this.value)"></td>
+                    <td><input type="text" value="${s.target_zone || ''}" class="input-inline" style="color: var(--success); font-weight: 600;" onchange="updateSetupField(${s.id}, 'target_zone', this.value)"></td>
+                    <td><input type="text" value="${s.invalidation || ''}" class="input-inline" style="color: var(--danger);" onchange="updateSetupField(${s.id}, 'invalidation', this.value)"></td>
+                    <td><input type="text" value="${s.sector || ''}" class="input-inline" style="text-transform: uppercase; font-size: 0.65rem; opacity: 0.7;" onchange="updateSetupField(${s.id}, 'sector', this.value)"></td>
+                    <td><input type="text" value="${s.horizon || ''}" class="input-inline" onchange="updateSetupField(${s.id}, 'horizon', this.value)"></td>
+                    <td><input type="number" min="0" max="5" value="${s.confidence_stars || 0}" class="input-inline" style="color: var(--warning); width: 40px;" onchange="updateSetupField(${s.id}, 'confidence_stars', this.value)"></td>
+                    <td>
+                        <select class="input-inline" style="background: var(--bg-dark); border: none;" onchange="updateSetupField(${s.id}, 'buy_wait_status', this.value)">
+                            <option value="Wait" ${s.buy_wait_status !== 'Buy' ? 'selected' : ''}>Wait</option>
+                            <option value="Buy" ${s.buy_wait_status === 'Buy' ? 'selected' : ''}>Buy</option>
+                        </select>
+                    </td>
                 </tr>
             `).join('');
+        }
+
+        async function updateSetupField(id, field, value) {
+            try {
+                const payload = { id };
+                payload[field] = value;
+                await axios.post('/api/setups', payload);
+                console.log(`Updated setup ${id}: ${field} = ${value}`);
+            } catch (err) {
+                console.error("Field Update Error:", err);
+                alert("Failed to save change. Check console.");
+            }
         }
 
         async function loadStrategyTable(stratId) {
