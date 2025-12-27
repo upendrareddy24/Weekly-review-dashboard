@@ -1,7 +1,7 @@
 -- Database Schema for Stock Strategy Tracker
 
 CREATE TABLE IF NOT EXISTS tickers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     symbol TEXT UNIQUE NOT NULL,
     sector TEXT,
     industry TEXT,
@@ -11,13 +11,13 @@ CREATE TABLE IF NOT EXISTS tickers (
 );
 
 CREATE TABLE IF NOT EXISTS strategies (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
     description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS setups (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     ticker_id INTEGER NOT NULL,
     strategy_id INTEGER NOT NULL,
     date TEXT NOT NULL,
@@ -47,14 +47,14 @@ CREATE TABLE IF NOT EXISTS setups (
 );
 
 CREATE TABLE IF NOT EXISTS market_snapshots (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     date TEXT NOT NULL,
     regime TEXT,           -- Risk-On, Risk-Off
     notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS catalysts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     week_number INTEGER,      -- Associated Review Week (1-52)
     week_start TEXT,
     day TEXT NOT NULL,

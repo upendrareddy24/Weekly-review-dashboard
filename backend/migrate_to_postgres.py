@@ -23,7 +23,7 @@ def migrate():
     pg_cur = pg_conn.cursor()
 
     # Define tables to migrate in order (dependencies first)
-    tables = ["strategies", "tickers", "setups", "catalysts"]
+    tables = ["strategies", "tickers", "setups", "catalysts", "macro_reviews", "focus_reviews", "market_snapshots"]
 
     for table in tables:
         print(f"Migrating table: {table}")
