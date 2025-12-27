@@ -242,9 +242,72 @@ aside {
 
 /* Section Dividers */
 .section-priority {
-    border-left: 4px solid var(--accent-primary);
-    background: var(--accent-glow);
-    padding: 1rem;
-    margin-bottom: 2rem;
     border-radius: 0 8px 8px 0;
+}
+
+@media print {
+
+    .container aside,
+    .wizard-navigation,
+    .week-grid,
+    .btn-primary,
+    .btn-secondary,
+    .fa-times-circle,
+    #wizardHeader,
+    .regime-banner,
+    .table-container button {
+        display: none !important;
+    }
+
+    .container {
+        display: block !important;
+    }
+
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .wizard-content.hidden {
+        display: none !important;
+    }
+
+    .wizard-content {
+        display: block !important;
+        page-break-after: always;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    .table-container {
+        border: 1px solid #eee !important;
+        background: white !important;
+    }
+
+    .data-table th {
+        background: #f8fafc !important;
+        color: #000 !important;
+        border-bottom: 2px solid #334155 !important;
+    }
+
+    .data-table td {
+        color: #000 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .accent-text,
+    .accent-primary {
+        color: #3b82f6 !important;
+    }
+
+    .checklist-card {
+        break-inside: avoid;
+        border: 1px solid #e2e8f0 !important;
+        background: white !important;
+        color: black !important;
+    }
 }

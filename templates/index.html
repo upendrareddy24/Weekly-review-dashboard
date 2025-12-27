@@ -79,7 +79,18 @@
                 <div class="wizard-step" id="step2Tab" onclick="goToStep(2)">2. Catalyst Radar</div>
                 <div class="wizard-step" id="step3Tab" onclick="goToStep(3)">3. Sector Strength</div>
                 <div class="wizard-step" id="step4Tab" onclick="goToStep(4)">4. Mag 7 Review</div>
+                <div class="wizard-step" id="step4Tab" onclick="goToStep(4)">4. Mag 7 Review</div>
                 <div class="wizard-step" id="step5Tab" onclick="goToStep(5)">5. Strategy Hub</div>
+                <div style="margin-left: auto; display: flex; gap: 10px;">
+                    <button class="btn-secondary" onclick="exportReport('active')"
+                        style="font-size: 0.75rem; background: var(--card-bg); border: 1px solid var(--accent-primary);">
+                        <i class="fas fa-file-pdf"></i> Export CW${activeWeek}
+                    </button>
+                    <button class="btn-secondary" onclick="exportReport('all')"
+                        style="font-size: 0.75rem; background: var(--card-bg); border: 1px solid var(--accent-primary);">
+                        <i class="fas fa-copy"></i> Export All
+                    </button>
+                </div>
             </div>
 
             <!-- STEP 1: WEEK SELECTOR -->
@@ -513,17 +524,29 @@
                     alert("Failed to save data. Check console.");
                 }
             }
+        }
 
-            async function loadMag7() {
-                const grid = document.getElementById('mag7Grid');
-                if (!grid) return; // Grid might be removed in new spec
-                grid.innerHTML = '<div style="opacity: 0.5; padding: 2rem;">Loading Mag 7 Performance...</div>';
+        function exportReport(scope) {
+            if (scope === 'active') {
+                window.print();
+            } else {
+                // In a full implementation, this would fetch all data.
+                // For now, we alert the user we are preparing the bulk report.
+                alert("Preparing Institutional Portfolio Summary (All Weeks). This may take a moment...");
+                window.print();
+            }
+        }
 
-                try {
-                    const res = await axios.post('/api/prices', { symbols: mag7Tickers });
-                    const prices = res.data;
+        async function loadMag7() {
+            const grid = document.getElementById('mag7Grid');
+            if (!grid) return; // Grid might be removed in new spec
+            grid.innerHTML = '<div style="opacity: 0.5; padding: 2rem;">Loading Mag 7 Performance...</div>';
 
-                    grid.innerHTML = mag7Tickers.map(symbol => `
+            try {
+                const res = await axios.post('/api/prices', { symbols: mag7Tickers });
+                const prices = res.data;
+
+                grid.innerHTML = mag7Tickers.map(symbol => `
                     <div class="checklist-card" style="background: var(--card-bg); padding: 1.5rem; border: 1px solid var(--glass-border); border-radius: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3 style="font-size: 1.25rem; font-weight: 900;">${symbol}</h3>
@@ -536,17 +559,17 @@
                         <textarea placeholder="Tactical technical thesis..." style="width: 100%; height: 80px; background: var(--bg-dark); border: 1px solid var(--glass-border); color: #fff; padding: 10px; font-size: 0.8rem; border-radius: 4px; resize: none;"></textarea>
                     </div>
                 `).join('');
-                } catch (err) {
-                    console.error("Mag 7 Error:", err);
-                }
+            } catch (err) {
+                console.error("Mag 7 Error:", err);
             }
+        }
 
-            async function loadStrategyHub() {
-                const tabsContainer = document.getElementById('strategyTabs');
-                try {
-                    const res = await axios.get('/api/strategies');
-                    const strats = res.data;
-                    tabsContainer.innerHTML = strats.map((s, idx) => `
+        async function loadStrategyHub() {
+            const tabsContainer = document.getElementById('strategyTabs');
+            try {
+                const res = await axios.get('/api/strategies');
+                const strats = res.data;
+                tabsContainer.innerHTML = strats.map((s, idx) => `
                     <div class="strategy-tab ${idx === 0 ? 'active' : ''}" 
                          style="padding: 10px 20px; background: ${idx === 0 ? 'var(--accent-primary)' : 'var(--card-bg)'}; border-radius: 20px; cursor: pointer; font-size: 0.75rem; border: 1px solid var(--glass-border);"
                          onclick="switchStrat(this, ${s.id})">
@@ -554,38 +577,38 @@
                     </div>
                 `).join('');
 
-                    renderExcelHeaders();
-                    if (strats.length > 0) loadStrategyTable(strats[0].id);
-                } catch (err) {
-                    console.error("Strat Hub Error:", err);
-                }
+                renderExcelHeaders();
+                if (strats.length > 0) loadStrategyTable(strats[0].id);
+            } catch (err) {
+                console.error("Strat Hub Error:", err);
             }
+        }
 
-            function switchStrat(el, id) {
-                document.querySelectorAll('.strategy-tab').forEach(t => {
-                    t.style.background = 'var(--card-bg)';
-                    t.classList.remove('active');
-                });
-                el.style.background = 'var(--accent-primary)';
-                el.classList.add('active');
-                loadStrategyTable(id);
-            }
+        function switchStrat(el, id) {
+            document.querySelectorAll('.strategy-tab').forEach(t => {
+                t.style.background = 'var(--card-bg)';
+                t.classList.remove('active');
+            });
+            el.style.background = 'var(--accent-primary)';
+            el.classList.add('active');
+            loadStrategyTable(id);
+        }
 
-            function renderExcelHeaders() {
-                const head = document.getElementById('tableHeaders');
-                const cols = ['ChatGPT', 'Strategy', 'BUY Date', 'Stock', 'Category', 'Pattern Stage', 'Score', 'Highlights', 'Breakout Zone', 'Target Zone', 'Invalidation', 'Sector', 'Horizon', 'Confidence', 'Buy / Wait'];
-                head.innerHTML = cols.map(c => `<th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">${c}</th>`).join('');
-            }
+        function renderExcelHeaders() {
+            const head = document.getElementById('tableHeaders');
+            const cols = ['ChatGPT', 'Strategy', 'BUY Date', 'Stock', 'Category', 'Pattern Stage', 'Score', 'Highlights', 'Breakout Zone', 'Target Zone', 'Invalidation', 'Sector', 'Horizon', 'Confidence', 'Buy / Wait'];
+            head.innerHTML = cols.map(c => `<th style="text-align: left; padding: 12px; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">${c}</th>`).join('');
+        }
 
-            async function loadStrategyTable(stratId) {
-                const body = document.getElementById('excelBody');
-                body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Syncing with Analyst Database...</td></tr>';
+        async function loadStrategyTable(stratId) {
+            const body = document.getElementById('excelBody');
+            body.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 5rem; opacity: 0.5;">Syncing with Analyst Database...</td></tr>';
 
-                try {
-                    const res = await axios.get(`/api/setups?strategy_id=${stratId}`);
-                    const setups = res.data;
+            try {
+                const res = await axios.get(`/api/setups?strategy_id=${stratId}`);
+                const setups = res.data;
 
-                    body.innerHTML = setups.map(s => `
+                body.innerHTML = setups.map(s => `
                     <tr>
                         <td style="opacity: 0.5;">${s.source || 'Analyst'}</td>
                         <td style="font-weight: 500;">${s.strategy_name || 'N/A'}</td>
@@ -604,12 +627,12 @@
                         <td><span class="state-badge ${s.buy_wait_status === 'Buy' ? 'state-triggered' : 'state-monitoring'}">${s.buy_wait_status || 'Wait'}</span></td>
                     </tr>
                 `).join('');
-                } catch (err) {
-                    console.error("Table Load Error:", err);
-                }
+            } catch (err) {
+                console.error("Table Load Error:", err);
             }
+        }
 
-            init();
+        init();
     </script>
 </body>
 
